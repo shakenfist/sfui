@@ -1,0 +1,12 @@
+# Pre-commit hooks matching the shakenfist/development consistency
+# audit standards. This repository is plain CSS/JS with no build
+# step, so the only lintable surface today is the shell in tools/;
+# actionlint joins when a GitHub Actions workflow appears.
+repos:
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: ^tools/
+        types_or: [sh, bash, shell]
+        args: ['-x']
