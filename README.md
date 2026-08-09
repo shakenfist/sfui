@@ -26,6 +26,8 @@ no JavaScript toolchain is required to consume it.
                       their own heading text)
     lit-core.min.js   Vendored Lit runtime (see Vendored
                       dependencies)
+    morphdom-umd.js   Vendored morphdom library (see Vendored
+                      dependencies)
     components/       One file per component, named after its
                       element
 
@@ -183,6 +185,13 @@ An audit (by hand or by an agent) should confirm:
   Single-file ES module; no npm, no build step, which is a
   property to preserve -- consumers of sfui should never need a
   JavaScript toolchain to ship.
+- `morphdom-umd.js`: morphdom 2.7.7, MIT, unmodified from
+  https://unpkg.com/morphdom@2.7.7/dist/morphdom-umd.js. Consumers
+  use it directly for poll-and-morph page refresh -- fetching a
+  fresh fragment and morphing it into the live DOM so scroll
+  position, focus and open disclosures survive a refresh. Like Lit,
+  a single file with no npm and no build step, a property to
+  preserve.
 
 ## Vendoring into a consumer
 
