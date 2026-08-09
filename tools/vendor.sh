@@ -8,11 +8,12 @@
 #
 # Run from any checkout of shakenfist/sfui (the script locates its
 # own repository). The distributable set is the design system itself
-# -- tokens, theme boot script, brand asset, the vendored Lit and
-# morphdom libraries, the components directory, and README.md -- but
-# not this tools/ directory or docs/. The source commit is recorded in
-# <target-directory>/.sfui-commit so a drift audit can compare the
-# vendored copy against exactly the commit it came from.
+# -- tokens, page styles, theme boot script, brand asset, the
+# vendored Lit and morphdom libraries, the components directory, and
+# README.md -- but not this tools/ directory or docs/. The source
+# commit is recorded in <target-directory>/.sfui-commit so a drift
+# audit can compare the vendored copy against exactly the commit it
+# came from.
 #
 # --check diffs instead of copying and exits non-zero if the
 # vendored copy does not match the current source tree, which makes
@@ -23,6 +24,7 @@ set -e
 files=(
     README.md
     tokens.css
+    sf.css
     sf-theme.js
     shakenfist-logo.svg
     lit-core.min.js
