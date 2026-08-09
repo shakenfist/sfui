@@ -237,7 +237,11 @@ one of them follows these rules:
    are `sf-*` too.
 3. **Shadow DOM, styled by tokens.** Components render into shadow
    DOM and take all colors from design tokens (with matching
-   fallbacks, per the token rules). Sizing and spacing may be
+   fallbacks, per the token rules). Corner radii work the same
+   way: `var(--sf-radius, 6px)` rather than a literal, with the
+   fallback matching `sf.css`'s value exactly, so a component
+   follows the page's radius scale where one is loaded and looks
+   unchanged where it is not. Other sizing and spacing may be
    local, but should stay visually consistent with the existing
    components.
 4. **The contract is documented in the file header:** properties,
