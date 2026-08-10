@@ -1,0 +1,368 @@
+<!--
+    sfui primitive gallery.
+
+    This page renders every class and modifier defined in sf.css,
+    plus the sf-tabs and sf-theme-toggle components, so the
+    stylesheet can be inspected in both the light and dark
+    palettes without booting a consumer application. It exists
+    for review, not for shipping: it is NOT part of the
+    distributable set (see the "Layout" section of README.md) --
+    like docs/ and tools/, consumers do not carry it, and it is
+    absent from tools/vendor.sh's file list on purpose.
+
+    The components below are ES modules, so this page must be
+    served over HTTP -- file:// will not load them. From the
+    repository root:
+
+        python3 -m http.server
+
+    then visit http://localhost:8000/demo.html.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>sfui primitive gallery</title>
+    <!-- Render-blocking on purpose: stamps data-theme before
+         first paint so there is no flash of the wrong theme. -->
+    <script src="sf-theme.js"></script>
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="sf.css">
+    <script type="module" src="components/sf-tabs.js"></script>
+    <script type="module"
+            src="components/sf-theme-toggle.js"></script>
+</head>
+<body class="sf-page">
+    <div class="sf-container">
+        <header class="sf-header">
+            <h1><img src="shakenfist-logo.svg" alt="">
+                sfui primitive gallery</h1>
+            <p>Every class sf.css defines, rendered once each, so
+                nothing in it ships unreviewed.</p>
+            <p class="sf-status-line">3 workers online · queue
+                depth 5 · updated 12s ago</p>
+            <sf-theme-toggle id="theme-toggle"></sf-theme-toggle>
+        </header>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Tab strip</h2>
+            </div>
+            <sf-tabs id="demo-tabs"></sf-tabs>
+            <p class="sf-footnote">Selected tab:
+                <span id="selected-tab">overview</span></p>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Workflow runs</h2>
+                <button class="sf-btn sf-btn--sm sf-push-right"
+                        type="button">Refresh</button>
+            </div>
+            <div class="sf-table-scroll">
+                <table class="sf-table sf-table--striped">
+                    <thead>
+                        <tr>
+                            <th>Workflow</th>
+                            <th>Job</th>
+                            <th>Repository</th>
+                            <th>Runner</th>
+                            <th>OS label</th>
+                            <th>Size</th>
+                            <th>Queued at</th>
+                            <th>Started at</th>
+                            <th>Status</th>
+                            <th class="sf-num">Duration (s)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>build-and-test</td>
+                            <td>unit-tests</td>
+                            <td>shakenfist/sfui</td>
+                            <td>gh-ci-014</td>
+                            <td>ubuntu-22.04</td>
+                            <td>standard</td>
+                            <td>09:14:02</td>
+                            <td>09:14:05</td>
+                            <td>success</td>
+                            <td class="sf-num">182</td>
+                        </tr>
+                        <tr>
+                            <td>build-and-test</td>
+                            <td>lint</td>
+                            <td>shakenfist/sfui</td>
+                            <td>gh-ci-019</td>
+                            <td>ubuntu-22.04</td>
+                            <td>small</td>
+                            <td>09:14:02</td>
+                            <td>09:14:06</td>
+                            <td>success</td>
+                            <td class="sf-num">41</td>
+                        </tr>
+                        <tr>
+                            <td>deploy-conductor</td>
+                            <td>build-image</td>
+                            <td>shakenfist/private-ci</td>
+                            <td>gh-ci-007</td>
+                            <td>ubuntu-22.04</td>
+                            <td>large</td>
+                            <td>09:12:40</td>
+                            <td>09:12:44</td>
+                            <td>running</td>
+                            <td class="sf-num">612</td>
+                        </tr>
+                        <tr>
+                            <td>merge-queue</td>
+                            <td>integration</td>
+                            <td>shakenfist/sfui</td>
+                            <td>gh-ci-014</td>
+                            <td>ubuntu-22.04</td>
+                            <td>standard</td>
+                            <td>09:10:11</td>
+                            <td>09:10:15</td>
+                            <td>failure</td>
+                            <td class="sf-num">305</td>
+                        </tr>
+                        <tr>
+                            <td>nightly-rebuild</td>
+                            <td>build-dependencies-image</td>
+                            <td>shakenfist/private-ci</td>
+                            <td>gh-ci-002</td>
+                            <td>ubuntu-24.04</td>
+                            <td>large</td>
+                            <td>03:00:00</td>
+                            <td>03:00:04</td>
+                            <td>success</td>
+                            <td class="sf-num">2143</td>
+                        </tr>
+                        <tr>
+                            <td>vendor-check</td>
+                            <td>drift-audit</td>
+                            <td>shakenfist/kerbside</td>
+                            <td>gh-ci-021</td>
+                            <td>ubuntu-22.04</td>
+                            <td>small</td>
+                            <td>08:55:02</td>
+                            <td>08:55:03</td>
+                            <td>success</td>
+                            <td class="sf-num">9</td>
+                        </tr>
+                        <tr>
+                            <td>pr-review-bot</td>
+                            <td>re-review</td>
+                            <td>shakenfist/sfui</td>
+                            <td>gh-ci-014</td>
+                            <td>ubuntu-22.04</td>
+                            <td>standard</td>
+                            <td>08:40:19</td>
+                            <td>08:40:22</td>
+                            <td>cancelled</td>
+                            <td class="sf-num">58</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="sf-footnote">Last 7 days, 90 second poll
+                interval.</p>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Cards</h2>
+            </div>
+            <div class="sf-card">
+                <p><strong>gh-ci-014</strong>
+                    <span class="sf-badge sf-badge--green"
+                          >active</span></p>
+                <p class="sf-footnote">ubuntu-22.04 · standard ·
+                    up 3h 12m · last job build-and-test /
+                    unit-tests</p>
+            </div>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Buttons</h2>
+            </div>
+            <div class="sf-btn-group">
+                <button class="sf-btn" type="button">Cancel
+                </button>
+                <button class="sf-btn sf-btn--primary"
+                        type="button">Approve</button>
+                <button class="sf-btn sf-btn--danger"
+                        type="button">Terminate</button>
+                <button class="sf-btn sf-btn--sm"
+                        type="button">Small</button>
+                <button class="sf-btn" type="button" disabled>
+                    Unavailable</button>
+            </div>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Badges</h2>
+            </div>
+            <p>
+                <span class="sf-badge sf-badge--green">success
+                    </span>
+                <span class="sf-badge sf-badge--amber">pending
+                    </span>
+                <span class="sf-badge sf-badge--red">failed
+                    </span>
+                <span class="sf-badge sf-badge--purple">priority
+                    </span>
+                <span class="sf-badge sf-badge--pink">stray
+                    </span>
+                <span class="sf-badge sf-badge--accent">queued
+                    </span>
+                <span class="sf-badge sf-badge--dim">idle</span>
+            </p>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Command output</h2>
+            </div>
+            <div class="sf-code">$ pytest tests/ -x
+collecting ... collected 214 items
+
+tests/test_tokens.py::test_both_palettes_defined PASSED
+tests/test_sf_css.py::test_no_hardcoded_colors PASSED
+tests/test_vendor.py::test_check_detects_drift PASSED
+
+==== 214 passed in 18.42s ====</div>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Banners</h2>
+            </div>
+            <div class="sf-banner sf-banner--warn">Conductor is
+                starting up &mdash; dashboard data may be
+                incomplete until the first collection cycle
+                finishes.</div>
+            <div class="sf-banner sf-banner--error">3 workers
+                went stray during the last GitHub API outage and
+                need manual cleanup.</div>
+            <div class="sf-banner sf-banner--info">A new sfui
+                release is available; run
+                <code>tools/vendor.sh --check</code> to see the
+                diff.</div>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Empty state</h2>
+            </div>
+            <div class="sf-empty">No workers running</div>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Disclosures</h2>
+            </div>
+            <details class="sf-disclosure">
+                <summary>Show raw event payload</summary>
+                <p>{"action": "completed", "workflow_run":
+                    {"id": 1234567890, "conclusion": "success"}}
+                </p>
+            </details>
+
+            <details class="sf-disclosure--panel" open>
+                <summary>gh-ci-014 &mdash; build-and-test /
+                    unit-tests</summary>
+                <p>Started 09:14:02, finished 09:17:04 (182s),
+                    runner ubuntu-22.04 standard, exit code 0.
+                </p>
+            </details>
+            <details class="sf-disclosure--panel">
+                <summary>gh-ci-019 &mdash; build-and-test /
+                    lint</summary>
+                <p>Started 09:14:02, finished 09:14:43 (41s),
+                    runner ubuntu-22.04 small, exit code 0.</p>
+            </details>
+            <details class="sf-disclosure--panel">
+                <summary>gh-ci-007 &mdash; deploy-conductor /
+                    build-image</summary>
+                <p>Started 09:12:40, still running, runner
+                    ubuntu-22.04 large.</p>
+            </details>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Cancel a run</h2>
+            </div>
+            <form>
+                <div class="sf-field">
+                    <label class="sf-label" for="run-id">Run ID
+                        </label>
+                    <input class="sf-input" id="run-id"
+                           type="text"
+                           placeholder="e.g. 1234567890"
+                           value="1234567890">
+                </div>
+                <div class="sf-field">
+                    <label class="sf-label" for="reason">Reason
+                        </label>
+                    <input class="sf-input" id="reason"
+                           type="text" placeholder="optional">
+                    <p class="sf-form-error">A cancellation
+                        reason is required for merge-queue runs.
+                    </p>
+                </div>
+                <button class="sf-btn sf-btn--danger"
+                        type="submit">Cancel run</button>
+            </form>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>About this page</h2>
+            </div>
+            <p>This gallery is generated by hand against
+                <code>sf.css</code>; see the
+                <a href="https://github.com/shakenfist/sfui"
+                   >sfui repository</a> for the full design
+                system README.</p>
+        </section>
+
+        <footer class="sf-footer">sfui primitive gallery &mdash;
+            served locally, not part of the distributable set
+        </footer>
+    </div>
+
+    <script>
+        var themeToggle = document.getElementById(
+            'theme-toggle');
+        themeToggle.preference = window.sfTheme.preference;
+        themeToggle.addEventListener(
+            'sf-theme-changed',
+            function (event) {
+                window.sfTheme.set(event.detail.preference);
+            });
+
+        var tabStrip = document.getElementById('demo-tabs');
+        var selectedTabLabel = document.getElementById(
+            'selected-tab');
+        tabStrip.tabs = [
+            {id: 'overview', label: 'Overview', badge: null},
+            {id: 'workers', label: 'Workers',
+             badge: {count: 3, severity: 'info'}},
+            {id: 'queue', label: 'Queue',
+             badge: {count: 1, severity: 'attention'}},
+            {id: 'stray', label: 'Stray',
+             badge: {severity: 'urgent'}}
+        ];
+        tabStrip.selected = 'overview';
+        tabStrip.addEventListener(
+            'sf-tab-selected',
+            function (event) {
+                selectedTabLabel.textContent = event.detail.id;
+            });
+    </script>
+</body>
+</html>

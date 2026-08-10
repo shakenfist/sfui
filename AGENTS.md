@@ -23,6 +23,12 @@ Things that trip up assistants:
   light (`:root[data-theme="light"]`) palettes in `tokens.css`, and
   `var()` fallbacks in components must match the dark values
   exactly.
+- `demo.html` renders every `sf.css` primitive and both
+  components. It must be served over HTTP (`python3 -m
+  http.server` from the repository root) -- its components are ES
+  modules and will not load from `file://`. Add a new primitive or
+  component to it in the same change that introduces it: an
+  unrendered primitive is one nobody has looked at.
 - Run `pre-commit run --all-files` before proposing a commit
   (shellcheck on `tools/`).
 
