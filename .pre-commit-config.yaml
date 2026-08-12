@@ -1,8 +1,24 @@
 # Pre-commit hooks matching the shakenfist/development consistency
-# audit standards. This repository is plain CSS/JS with no build
-# step, so the only lintable surface today is the shell in tools/;
-# actionlint joins when a GitHub Actions workflow appears.
+# audit standards.
+#
+# Install with: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# For actionlint, install the binary:
+#   - macOS: brew install actionlint
+#   - Linux: https://github.com/rhysd/actionlint/releases
+
 repos:
+  # GitHub Actions workflow linter
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        name: Lint GitHub Actions workflows
+        description: Static checker for GitHub Actions workflow files
+        args: ['-config-file', '.github/actionlint.yaml']
+
+  # Shell script linter for our tools/ scripts
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1
     hooks:
@@ -10,3 +26,44 @@ repos:
         files: ^tools/
         types_or: [sh, bash, shell]
         args: ['-x']
+
+  # Trailing whitespace, end-of-file, basic hygiene. The vendored
+  # Lit and morphdom bundles are excluded from the rewriting hooks
+  # so we do not gratuitously modify upstream files.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(lit-core\.min\.js|morphdom-umd\.js)$
+      - id: end-of-file-fixer
+        exclude: ^(lit-core\.min\.js|morphdom-umd\.js)$
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+
+  # JavaScript and CSS lint plus format checking, via Biome. The
+  # wrapper fetches the pinned, checksum-verified standalone binary,
+  # keeping npm out of the repository's tooling entirely.
+  - repo: local
+    hooks:
+      - id: biome
+        name: Lint JavaScript and CSS with Biome
+        description: biome ci over the repository (see biome.json)
+        entry: tools/run-biome.sh
+        language: script
+        pass_filenames: false
+        types_or: [javascript, css]
+
+  # The sfui consistency checker: the mechanical design-system rules
+  # from docs/consistency-audit.md (token parity across palettes,
+  # var() fallback matching, no hex outside tokens.css, and so on).
+  - repo: local
+    hooks:
+      - id: sfui-consistency
+        name: Check design system consistency rules
+        description: tools/consistency-check.py over the repository
+        entry: tools/consistency-check.py
+        language: script
+        pass_filenames: false
+        always_run: true
