@@ -1,0 +1,127 @@
+name: Functional tests
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  sanity_checks:
+    name: "Lint and consistency checks"
+    # pre-commit installs hook environments (a Go toolchain for
+    # actionlint, the Biome binary), which wants a writable ephemeral
+    # runner rather than the shared static pool.
+    runs-on: [self-hosted, vm, debian-12, s]
+    timeout-minutes: 15
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-lint
+      cancel-in-progress: true
+    env:
+      PIP_INDEX_URL: http://192.168.1.15:3141/root/pypi/+simple/
+      # Fall back to pypi so a devpi cold-cache miss (empty index on a
+      # first-touch package) cannot hard-fail the job.
+      PIP_EXTRA_INDEX_URL: https://pypi.org/simple/
+      PIP_TRUSTED_HOST: 192.168.1.15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install pre-commit
+        timeout-minutes: 5
+        run: |
+          python3 -mvenv /tmp/venv-lint
+          . /tmp/venv-lint/bin/activate
+          pip3 install pre-commit
+
+      - name: Run all pre-commit hooks
+        timeout-minutes: 10
+        run: |
+          . /tmp/venv-lint/bin/activate
+          pre-commit run --all-files --show-diff-on-failure
+
+  unit_tests:
+    name: "Unit tests"
+    # playwright install-deps needs passwordless sudo for apt, which
+    # the vm runners grant and the static pool does not.
+    runs-on: [self-hosted, vm, debian-12, s]
+    timeout-minutes: 20
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-unit
+      cancel-in-progress: true
+    env:
+      PIP_INDEX_URL: http://192.168.1.15:3141/root/pypi/+simple/
+      # Fall back to pypi so a devpi cold-cache miss (empty index on a
+      # first-touch package) cannot hard-fail the job.
+      PIP_EXTRA_INDEX_URL: https://pypi.org/simple/
+      PIP_TRUSTED_HOST: 192.168.1.15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install test tools and a browser
+        timeout-minutes: 10
+        run: |
+          python3 -mvenv /tmp/venv-test
+          . /tmp/venv-test/bin/activate
+          pip3 install pytest playwright
+          playwright install --with-deps chromium
+
+      - name: Run the test suite
+        timeout-minutes: 10
+        run: |
+          . /tmp/venv-test/bin/activate
+          pytest tests/ -v
+
+  check-bot-commit:
+    name: "Check for a bot commit"
+    runs-on: [self-hosted, static]
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    # The top-level permissions block zeroes every unlisted scope, and
+    # the commits endpoint needs pull-requests read.
+    permissions:
+      pull-requests: read
+    outputs:
+      is_bot: ${{ steps.check.outputs.is_bot }}
+
+    steps:
+      - name: Check if latest commit is from a bot
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fail the job on an API error rather than defaulting the
+          # author: a 403 or rate limit folded into "not a bot" would
+          # silently re-enable the reviewer for bot commits.
+          if ! author=$(gh api \
+            repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
+            --jq '.[-1].commit.author.email'); then
+            echo "Could not determine the latest commit author"
+            exit 1
+          fi
+          echo "Latest commit author: ${author}"
+          if [[ "${author}" == "bot@shakenfist.com" ]] || \
+             [[ "${author}" == "noreply@anthropic.com" ]]; then
+            echo "is_bot=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_bot=false" >> $GITHUB_OUTPUT
+          fi
+
+  automated_reviewer:
+    name: "Automated reviewer"
+    needs: [sanity_checks, unit_tests, check-bot-commit]
+    if: |
+      github.event_name == 'pull_request' &&
+      needs.check-bot-commit.outputs.is_bot != 'true'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    uses: shakenfist/actions/.github/workflows/pr-auto-review.yml@main
+    secrets: inherit

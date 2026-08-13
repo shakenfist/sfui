@@ -1,0 +1,33 @@
+<!doctype html>
+<!--
+    Test harness for sf-tabs. The page plays the host-page role
+    from the component contract: it hands the strip data through
+    properties and records the events the strip reports, so the
+    tests can assert on both sides of the contract.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>sf-tabs test page</title>
+    <link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+    <sf-tabs></sf-tabs>
+    <script type="module">
+        import '/components/sf-tabs.js';
+        const tabs = document.querySelector('sf-tabs');
+        tabs.tabs = [
+            {id: 'alpha', label: 'Alpha', badge: null},
+            {id: 'beta', label: 'Beta',
+                badge: {count: 3, severity: 'urgent'}},
+            {id: 'gamma', label: 'Gamma', badge: {severity: 'bogus'}},
+        ];
+        tabs.selected = 'alpha';
+        window.events = [];
+        tabs.addEventListener('sf-tab-selected', (event) => {
+            window.events.push(event.detail);
+        });
+        window.harnessReady = true;
+    </script>
+</body>
+</html>

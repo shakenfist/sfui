@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+    Test harness for sf-theme-toggle in isolation: no sf-theme.js
+    here, so the tests can verify the component itself never
+    touches cookies or the document element and only reports
+    choices through its event.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>sf-theme-toggle test page</title>
+    <link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+    <sf-theme-toggle></sf-theme-toggle>
+    <script type="module">
+        import '/components/sf-theme-toggle.js';
+        const toggle = document.querySelector('sf-theme-toggle');
+        window.events = [];
+        toggle.addEventListener('sf-theme-changed', (event) => {
+            window.events.push(event.detail);
+        });
+        window.harnessReady = true;
+    </script>
+</body>
+</html>

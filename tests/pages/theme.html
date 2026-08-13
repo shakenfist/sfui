@@ -1,0 +1,27 @@
+<!doctype html>
+<!--
+    Test harness for sf-theme.js and its documented wiring to
+    sf-theme-toggle: the boot script loads synchronously in head
+    exactly as a real page includes it, and the toggle is wired to
+    window.sfTheme the way docs/components.md shows.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>sf-theme test page</title>
+    <script src="/sf-theme.js"></script>
+    <link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+    <sf-theme-toggle></sf-theme-toggle>
+    <script type="module">
+        import '/components/sf-theme-toggle.js';
+        const toggle = document.querySelector('sf-theme-toggle');
+        toggle.preference = sfTheme.preference;
+        toggle.addEventListener('sf-theme-changed', (event) => {
+            sfTheme.set(event.detail.preference);
+        });
+        window.harnessReady = true;
+    </script>
+</body>
+</html>
