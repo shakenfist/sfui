@@ -118,9 +118,10 @@ while [[ $# -gt 0 ]]; do
         --help|-h)
             # Print the header comment block, however long it is: every
             # leading comment line after the shebang, stopping at the
-            # first non-comment line.
+            # first non-comment line. Read via script_dir, not $0: the
+            # cd to work_dir above already invalidated a relative $0.
             awk 'NR > 2 && /^#/ {sub(/^# ?/, ""); print; next}
-                 NR > 2 {exit}' "$0"
+                 NR > 2 {exit}' "${script_dir}/$(basename "$0")"
             exit 0
             ;;
         -*)
