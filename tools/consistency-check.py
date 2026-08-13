@@ -43,6 +43,10 @@ def strip_js_comments(text):
     return re.sub(r'(?<!:)//[^\n]*', '', text)
 
 
+def strip_html_comments(text):
+    return re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
+
+
 def normalize(value):
     return ' '.join(value.split())
 
@@ -126,10 +130,19 @@ class Checker:
     def component_paths(self):
         return sorted((self.repo / 'components').glob('*.js'))
 
+    def component_text(self, path):
+        """A component's source with comments stripped, so a token
+        value or hex color discussed in a file header is not a
+        finding."""
+        return strip_js_comments(path.read_text())
+
     def run(self):
         tokens_css = self.read('tokens.css')
         sf_css = strip_css_comments(self.read('sf.css'))
-        demo_html = self.read('demo.html')
+        # Comments are stripped throughout: a hex value mentioned in an
+        # HTML comment is not a violation, and a class named only in a
+        # comment is not rendered.
+        demo_html = strip_html_comments(self.read('demo.html'))
         dark, light = parse_palettes(strip_css_comments(tokens_css))
 
         self.check_token_parity(dark, light)
@@ -159,7 +172,7 @@ class Checker:
         other color literal appears in a component."""
         for path in self.component_paths():
             relative = path.relative_to(self.repo)
-            text = path.read_text()
+            text = self.component_text(path)
             remainder = text
             for name, fallback in VAR_WITH_FALLBACK_RE.findall(text):
                 if name not in definitions:
@@ -183,7 +196,7 @@ class Checker:
         """Every var(--sf-*) reference names a defined custom property
         (a typo'd token silently falls back)."""
         sources = [('sf.css', sf_css), ('demo.html', demo_html)]
-        sources += [(path.relative_to(self.repo), path.read_text()) for path in self.component_paths()]
+        sources += [(path.relative_to(self.repo), self.component_text(path)) for path in self.component_paths()]
         for relative, text in sources:
             for name in VAR_REFERENCE_RE.findall(text):
                 if name not in definitions:
@@ -193,7 +206,7 @@ class Checker:
         """Custom element and dispatched event names start with sf-."""
         for path in self.component_paths():
             relative = path.relative_to(self.repo)
-            text = path.read_text()
+            text = self.component_text(path)
             for name in re.findall(r'customElements\.define\(\s*[\'"]([^\'"]+)', text):
                 if not name.startswith('sf-'):
                     self.finding(relative, f'custom element {name!r} is not sf- prefixed')
@@ -227,7 +240,8 @@ class Checker:
         no element shares a name with the CSS-only .sf-nav."""
         elements = set()
         for path in self.component_paths():
-            elements.update(re.findall(r'customElements\.define\(\s*[\'"]([^\'"]+)', path.read_text()))
+            elements.update(re.findall(
+                r'customElements\.define\(\s*[\'"]([^\'"]+)', self.component_text(path)))
         for element in sorted(elements):
             if re.search(r'\.' + re.escape(element) + r'\b', sf_css):
                 self.finding('sf.css', f'.{element} duplicates the <{element}> element name')

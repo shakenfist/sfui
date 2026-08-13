@@ -6,10 +6,10 @@ system, and the stamping of a concrete data-theme before pages
 paint.
 """
 
-import pytest
+import conftest
 
 
-pytest.importorskip('playwright.sync_api')
+conftest.require_playwright()
 
 
 def resolved_theme(page):

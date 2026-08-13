@@ -7,10 +7,10 @@ Playwright CSS locators pierce open shadow DOM, which is how the
 assertions reach the rendered buttons.
 """
 
-import pytest
+import conftest
 
 
-pytest.importorskip('playwright.sync_api')
+conftest.require_playwright()
 
 
 TABS = '/tests/pages/tabs.html'

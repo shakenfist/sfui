@@ -33,7 +33,8 @@ Things that trip up assistants:
   and light (`:root[data-theme="light"]`) palettes in
   `tokens.css`, and `var()` fallbacks in components must match
   the dark values exactly. `tools/consistency-check.py` enforces
-  this and the other mechanical rules; run it (or
+  this and the other mechanical rules (two audit rules are manual
+  and marked as such in `docs/consistency-audit.md`); run it (or
   `pre-commit run --all-files`, which includes it) before
   proposing changes.
 - `demo.html` renders every `sf.css` primitive and both

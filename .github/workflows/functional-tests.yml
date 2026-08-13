@@ -83,6 +83,10 @@ jobs:
     runs-on: [self-hosted, static]
     timeout-minutes: 10
     if: github.event_name == 'pull_request'
+    # The top-level permissions block zeroes every unlisted scope, and
+    # the commits endpoint needs pull-requests read.
+    permissions:
+      pull-requests: read
     outputs:
       is_bot: ${{ steps.check.outputs.is_bot }}
 
@@ -92,12 +96,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          author=$(gh api \
+          # Fail the job on an API error rather than defaulting the
+          # author: a 403 or rate limit folded into "not a bot" would
+          # silently re-enable the reviewer for bot commits.
+          if ! author=$(gh api \
             repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits \
-            --jq '.[-1].commit.author.email' 2>/dev/null || echo "unknown")
+            --jq '.[-1].commit.author.email'); then
+            echo "Could not determine the latest commit author"
+            exit 1
+          fi
           echo "Latest commit author: ${author}"
-          if [[ "${author}" == *"bot@shakenfist.com"* ]] || \
-             [[ "${author}" == *"noreply@anthropic.com"* ]]; then
+          if [[ "${author}" == "bot@shakenfist.com" ]] || \
+             [[ "${author}" == "noreply@anthropic.com" ]]; then
             echo "is_bot=true" >> $GITHUB_OUTPUT
           else
             echo "is_bot=false" >> $GITHUB_OUTPUT

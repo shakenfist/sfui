@@ -11,7 +11,9 @@ because a consumer auditing a host page by hand needs them (the
 checker only covers this repository's own files).
 
 An audit (by the checker, by hand, or by an agent) should
-confirm:
+confirm the following. Every bullet is enforced by the local
+checker unless it says otherwise -- two are not, and each of
+those says so and names who checks it instead.
 
 - No hex colors outside `tokens.css`, except `var()` fallbacks
   whose values match `tokens.css` exactly:
@@ -26,7 +28,9 @@ confirm:
   sibling component, and none references `fetch`, `location`,
   `history`, `localStorage` or host-page element ids.
 - Host pages set component state only through documented
-  properties, and react only to documented events.
+  properties, and react only to documented events. This rule is
+  for consumers auditing their own host pages by hand; the local
+  checker has no host pages to inspect.
 - Every token is defined in both palettes: the custom property
   names in the `:root` block of `tokens.css` and in its
   `[data-theme="light"]` block are identical sets.

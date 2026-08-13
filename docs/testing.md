@@ -52,6 +52,13 @@ demo.html is viewed. To run them:
     /tmp/venv-sfui/bin/playwright install chromium
     /tmp/venv-sfui/bin/pytest tests/
 
+Without Playwright installed the browser tests skip and only the
+checker and vendoring tests run -- except under CI (the `CI`
+environment variable is set), where a missing Playwright fails
+the run outright: CI installs it explicitly, so its absence there
+means the install step degraded, and skipping would report a
+green run that exercised no browser contracts.
+
 What is covered:
 
 - `tests/test_theme.py`: the `sf-theme.js` contract -- the auto

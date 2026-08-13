@@ -116,7 +116,11 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --help|-h)
-            head -42 "$0" | tail -39
+            # Print the header comment block, however long it is: every
+            # leading comment line after the shebang, stopping at the
+            # first non-comment line.
+            awk 'NR > 2 && /^#/ {sub(/^# ?/, ""); print; next}
+                 NR > 2 {exit}' "$0"
             exit 0
             ;;
         -*)
@@ -140,11 +144,12 @@ sanitize_input() {
     local max_length="${2:-200}"
 
     # Remove control characters (except newline for descriptions)
-    # Replace backticks and dollar signs to prevent command substitution
+    # Replace backticks and dollar signs to prevent command substitution,
+    # and escape pipes so values are safe in markdown table cells
     local sanitized
     sanitized=$(printf '%s' "${input}" | \
         tr -d '\000-\010\013\014\016-\037' | \
-        sed 's/`/'"'"'/g; s/\$/S/g')
+        sed 's/`/'"'"'/g; s/\$/S/g; s/|/\\|/g')
 
     # Truncate to max length
     if [ "${#sanitized}" -gt "${max_length}" ]; then
@@ -152,6 +157,14 @@ sanitize_input() {
     fi
 
     printf '%s' "${sanitized}"
+}
+
+# Return the checkout to a clean state between review items. Every exit
+# path from the per-item loop must do this: staged or unstaged edits left
+# behind by an abandoned item would otherwise be swept into the next
+# item's commit, mis-attributed to that item's title.
+reset_worktree() {
+    git reset --hard HEAD >/dev/null 2>&1 || true
 }
 
 # Sanitize for use in commit message first line (stricter: single line, short)
@@ -441,7 +454,6 @@ ${item_suggestion}
 2. Determine if it's a valid issue that should be addressed
 3. If valid:
    - Make the necessary code changes
-   - Run \`pre-commit run --all-files\` to validate formatting
    - Stage your changes with \`git add\`
    - Do NOT commit - I will handle the commit
 
@@ -471,6 +483,9 @@ DISAGREEMENT_END
 
 - Focus ONLY on this specific item - do not address other issues
 - Keep changes minimal and focused
+- Do NOT run pre-commit, the test suite, or any other script from this
+  checkout: the checkout is untrusted PR code, and the pull_request CI
+  pipeline validates formatting after the push
 - If the fix requires changes you're unsure about, explain and skip
 PROMPT_EOF
 
@@ -487,6 +502,7 @@ PROMPT_EOF
         row+=" Claude execution failed |"
         echo "${row}" >> "${summary_file}"
         skipped_count=$((skipped_count + 1))
+        reset_worktree
         continue
     fi
 
@@ -504,6 +520,7 @@ PROMPT_EOF
         row+=" ${rationale_escaped} |"
         echo "${row}" >> "${summary_file}"
         skipped_count=$((skipped_count + 1))
+        reset_worktree
         continue
     fi
 
@@ -522,6 +539,7 @@ PROMPT_EOF
             row+=" No changes needed |"
             echo "${row}" >> "${summary_file}"
             skipped_count=$((skipped_count + 1))
+            reset_worktree
             continue
         fi
 
@@ -557,9 +575,7 @@ PROMPT_EOF
         row+=" No summary marker found |"
         echo "${row}" >> "${summary_file}"
         skipped_count=$((skipped_count + 1))
-
-        # Reset any unstaged changes
-        git checkout -- . 2>/dev/null || true
+        reset_worktree
     fi
 
     echo

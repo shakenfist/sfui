@@ -171,6 +171,23 @@ def test_forbidden_api_in_a_comment_is_fine(tmp_path):
     assert findings(tmp_path, {'components/sf-thing.js': component}) == []
 
 
+def test_color_in_a_component_comment_is_fine(tmp_path):
+    component = CLEAN['components/sf-thing.js'].replace(
+        '    report() {', '    // the light value of --sf-red is #b91c1c\n    report() {')
+    assert findings(tmp_path, {'components/sf-thing.js': component}) == []
+
+
+def test_color_in_a_demo_comment_is_fine(tmp_path):
+    demo = CLEAN['demo.html'] + '<!-- the dark background is #0f1117, via var(--sf-bg) -->\n'
+    assert findings(tmp_path, {'demo.html': demo}) == []
+
+
+def test_class_rendered_only_in_a_demo_comment_is_missing(tmp_path):
+    demo = '<div class="sf-header"></div>\n<!-- <div class="sf-card"></div> -->\n'
+    assert any('.sf-card is defined in sf.css but never rendered' in finding
+               for finding in findings(tmp_path, {'demo.html': demo}))
+
+
 def test_brand_outside_page_chrome(tmp_path):
     styles = CLEAN['sf.css'] + '\n.sf-headerish {\n    color: var(--sf-brand);\n}\n'
     demo = CLEAN['demo.html'].replace('sf-header', 'sf-header sf-headerish')

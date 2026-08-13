@@ -8,6 +8,7 @@ the same reason demo.html needs `python3 -m http.server`.
 
 import functools
 import http.server
+import os
 import pathlib
 import threading
 
@@ -15,6 +16,21 @@ import pytest
 
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
+
+
+def require_playwright():
+    """Import Playwright, hard-failing under CI.
+
+    Locally a missing Playwright just skips the browser tests. In
+    CI the install step provisions Playwright explicitly, so a
+    failed import there means that step degraded -- and skipping
+    would report a green run that exercised none of the browser
+    contracts.
+    """
+    if os.environ.get('CI'):
+        import playwright.sync_api
+        return playwright.sync_api
+    return pytest.importorskip('playwright.sync_api')
 
 
 @pytest.fixture(scope='session')
@@ -31,7 +47,7 @@ def repo_url():
 
 @pytest.fixture(scope='session')
 def browser():
-    sync_api = pytest.importorskip('playwright.sync_api')
+    sync_api = require_playwright()
     with sync_api.sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         yield browser
