@@ -66,13 +66,18 @@ What is covered:
   of `sfTheme.set()`, rejection of unknown preferences, live
   restamping on OS theme changes, and the documented host-page
   wiring of `<sf-theme-toggle>` to `window.sfTheme`.
-- `tests/test_components.py`: both components against their file
+- `tests/test_components.py`: the components against their file
   header contracts -- rendering, ARIA semantics, selection by
   click and arrow key (including wrap-around and focus), badge
   variants, events firing on user action and staying silent on
   programmatic property sets, and the toggle never touching
-  cookies or the document element. Also loads `demo.html` in both
-  themes and asserts zero console errors.
+  cookies or the document element. For the data table: cell
+  descriptor rendering (parts, tones, links, badges, ribbons,
+  numeric alignment), the sort cycle back to natural order with
+  `aria-sort` and sort events, missing keys sorting last, sort
+  surviving row replacement, and action events with disabled
+  buttons staying silent. Also loads `demo.html` in both themes
+  and asserts zero console errors.
 - `tests/test_vendor.py`: `tools/vendor.sh` round-trip into a
   temporary directory, `.sfui-commit` stamping, and `--check`
   drift detection for edited, added and deleted files.

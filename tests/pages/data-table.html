@@ -1,0 +1,89 @@
+<!doctype html>
+<!--
+    Test harness for sf-data-table. The page plays the host-page
+    role from the component contract: it hands the table columns
+    and row descriptors through properties and records the events
+    the table reports, so the tests can assert on both sides of
+    the contract. The rows cover every part kind: plain
+    primitives, links, tones, tooltips, stacked block parts,
+    badges, a ribbon, and enabled and disabled buttons, with
+    sortValue overrides and a missing sort key.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>sf-data-table test page</title>
+    <link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+    <sf-data-table></sf-data-table>
+    <script type="module">
+        import '/components/sf-data-table.js';
+        const table = document.querySelector('sf-data-table');
+        table.columns = [
+            {label: 'Repository', sortable: true},
+            {label: 'Open Issues', sortable: true,
+                title: 'Open issues per repository'},
+            {label: 'Failure', sortable: true},
+            {label: 'Runs', align: 'num', sortable: true},
+            {label: 'Actions'},
+        ];
+        table.rows = [
+            [
+                {text: 'shakenfist/sfui',
+                    href: 'https://example.com/sfui',
+                    sortValue: 'sfui'},
+                {text: '3', href: 'https://example.com/issues',
+                    tone: 'amber', title: '#1, #2, #3',
+                    sortValue: 3},
+                {sortValue: 62, parts: [
+                    {text: '62%', tone: 'red'},
+                    {ribbon: ['green', 'pink', 'dim'],
+                        title: 'last 3 runs'},
+                ]},
+                {text: '42', sortValue: 42},
+                {button: {label: 'Build', action: 'build',
+                    data: {name: 'sfui'}}},
+            ],
+            [
+                {text: 'shakenfist/conductor',
+                    href: 'https://example.com/conductor',
+                    sortValue: 'conductor'},
+                {text: '0', tone: 'dim', sortValue: 0},
+                {sortValue: null, parts: [
+                    {text: 'never run', tone: 'dim',
+                        small: true},
+                    {text: 'no data', tone: 'dim', small: true,
+                        block: true},
+                ]},
+                'plain',
+                {button: {label: 'Build', action: 'build',
+                    data: {name: 'conductor'},
+                    disabled: true}},
+            ],
+            [
+                {text: 'shakenfist/kerbside',
+                    href: 'https://example.com/kerbside',
+                    sortValue: 'kerbside'},
+                {text: '11', href: 'https://example.com/issues',
+                    tone: 'amber', sortValue: 11},
+                {sortValue: 8, parts: [
+                    {badge: '↓ small', tone: 'green'},
+                    {badge: 'static', tone: 'orange'},
+                ]},
+                {text: '7', sortValue: 7},
+                null,
+            ],
+        ];
+        table.footnote = 'A footnote about the table.';
+        window.events = [];
+        table.addEventListener('sf-data-table-action', (event) => {
+            window.events.push(event.detail);
+        });
+        table.addEventListener('sf-data-table-sort', (event) => {
+            window.events.push(event.detail);
+        });
+        window.harnessReady = true;
+    </script>
+</body>
+</html>

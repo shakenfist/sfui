@@ -15,6 +15,7 @@ conftest.require_playwright()
 
 TABS = '/tests/pages/tabs.html'
 TOGGLE = '/tests/pages/toggle.html'
+DATA_TABLE = '/tests/pages/data-table.html'
 
 
 def events(page):
@@ -131,6 +132,160 @@ class TestSfThemeToggle:
         page.wait_for_function('window.events.length === 1')
         assert page.context.cookies() == []
         assert page.evaluate('document.documentElement.dataset.theme') is None
+
+
+def first_column(page):
+    cells = page.locator('sf-data-table tbody tr td:first-child')
+    return [text.strip() for text in cells.all_inner_texts()]
+
+
+def wait_first_row(page, repo):
+    page.wait_for_function(
+        'document.querySelector("sf-data-table").shadowRoot'
+        f'.querySelector("tbody tr td").textContent.trim() === "{repo}"')
+
+
+class TestSfDataTable:
+    def test_renders_headers_and_rows(self, make_page):
+        page = make_page(DATA_TABLE)
+        headers = page.locator('sf-data-table th')
+        assert headers.count() == 5
+        assert headers.first.get_attribute('scope') == 'col'
+        issues = page.locator('sf-data-table th', has_text='Open Issues')
+        assert issues.get_attribute('title') == 'Open issues per repository'
+        assert page.locator('sf-data-table tbody tr').count() == 3
+
+    def test_primitive_and_missing_cells(self, make_page):
+        page = make_page(DATA_TABLE)
+        second = page.locator('sf-data-table tbody tr').nth(1)
+        assert second.locator('td').nth(3).inner_text().strip() == 'plain'
+        third = page.locator('sf-data-table tbody tr').nth(2)
+        assert third.locator('td').nth(4).inner_text().strip() == ''
+
+    def test_num_column_right_aligns(self, make_page):
+        page = make_page(DATA_TABLE)
+        runs = page.locator('sf-data-table th', has_text='Runs')
+        assert runs.evaluate('el => getComputedStyle(el).textAlign') == 'right'
+        cell = page.locator('sf-data-table tbody tr').first.locator('td').nth(3)
+        assert cell.evaluate('el => getComputedStyle(el).textAlign') == 'right'
+
+    def test_link_parts(self, make_page):
+        page = make_page(DATA_TABLE)
+        link = page.locator('sf-data-table tbody a').first
+        assert link.get_attribute('href') == 'https://example.com/sfui'
+        assert link.get_attribute('target') == '_blank'
+        assert link.get_attribute('rel') == 'noopener'
+
+    def test_tone_maps_to_the_token_color(self, make_page):
+        page = make_page(DATA_TABLE)
+        amber = page.locator('sf-data-table a.amber').first
+        assert amber.evaluate('el => getComputedStyle(el).color') == 'rgb(251, 191, 36)'
+        assert amber.get_attribute('title') == '#1, #2, #3'
+
+    def test_badge_ribbon_and_block_parts(self, make_page):
+        page = make_page(DATA_TABLE)
+        pills = page.locator('sf-data-table .pill')
+        assert pills.all_inner_texts() == ['↓ small', 'static']
+        ribbon = page.locator('sf-data-table .ribbon')
+        assert ribbon.get_attribute('aria-hidden') == 'true'
+        assert ribbon.locator('span').count() == 3
+        block = page.locator('sf-data-table span', has_text='no data')
+        assert block.evaluate('el => getComputedStyle(el).display') == 'block'
+
+    def test_sort_cycle_returns_to_natural_order(self, make_page):
+        page = make_page(DATA_TABLE)
+        assert first_column(page) == [
+            'shakenfist/sfui', 'shakenfist/conductor', 'shakenfist/kerbside']
+        header = page.locator('sf-data-table th', has_text='Repository')
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/conductor')
+        assert first_column(page) == [
+            'shakenfist/conductor', 'shakenfist/kerbside', 'shakenfist/sfui']
+        assert header.get_attribute('aria-sort') == 'ascending'
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/sfui')
+        assert first_column(page) == [
+            'shakenfist/sfui', 'shakenfist/kerbside', 'shakenfist/conductor']
+        assert header.get_attribute('aria-sort') == 'descending'
+        header.locator('button').click()
+        page.wait_for_function('window.events.length === 3')
+        assert first_column(page) == [
+            'shakenfist/sfui', 'shakenfist/conductor', 'shakenfist/kerbside']
+        assert header.get_attribute('aria-sort') is None
+        assert events(page) == [
+            {'column': 0, 'direction': 'asc'},
+            {'column': 0, 'direction': 'desc'},
+            {'column': 0, 'direction': None},
+        ]
+
+    def test_numeric_sort_uses_sort_values(self, make_page):
+        page = make_page(DATA_TABLE)
+        header = page.locator('sf-data-table th', has_text='Open Issues')
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/conductor')
+        assert first_column(page) == [
+            'shakenfist/conductor', 'shakenfist/sfui', 'shakenfist/kerbside']
+
+    def test_missing_sort_keys_sort_last_in_both_directions(self, make_page):
+        page = make_page(DATA_TABLE)
+        header = page.locator('sf-data-table th', has_text='Failure')
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/kerbside')
+        assert first_column(page)[-1] == 'shakenfist/conductor'
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/sfui')
+        assert first_column(page)[-1] == 'shakenfist/conductor'
+
+    def test_replacing_rows_keeps_the_sort(self, make_page):
+        page = make_page(DATA_TABLE)
+        header = page.locator('sf-data-table th', has_text='Repository')
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/conductor')
+        page.evaluate(
+            """document.querySelector('sf-data-table').rows = [
+                [{text: 'zulu', sortValue: 'zulu'}, '0', null, '1', null],
+                [{text: 'alpha', sortValue: 'alpha'}, '0', null, '1', null],
+            ]""")
+        wait_first_row(page, 'alpha')
+        assert first_column(page) == ['alpha', 'zulu']
+        assert header.get_attribute('aria-sort') == 'ascending'
+
+    def test_action_button_reports_natural_row_index(self, make_page):
+        page = make_page(DATA_TABLE)
+        header = page.locator('sf-data-table th', has_text='Repository')
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/conductor')
+        page.locator('sf-data-table button.action:enabled').click()
+        page.wait_for_function('window.events.length === 2')
+        assert events(page)[-1] == {
+            'action': 'build', 'data': {'name': 'sfui'}, 'rowIndex': 0}
+
+    def test_disabled_button_is_silent(self, make_page):
+        page = make_page(DATA_TABLE)
+        disabled = page.locator('sf-data-table button.action[disabled]')
+        assert disabled.count() == 1
+        disabled.evaluate('el => el.click()')
+        assert events(page) == []
+
+    def test_empty_rows_render_the_empty_text(self, make_page):
+        page = make_page(DATA_TABLE)
+        page.evaluate(
+            """const table = document.querySelector('sf-data-table');
+               table.rows = [];
+               table.emptyText = 'Nothing queued';""")
+        empty = page.locator('sf-data-table .empty')
+        empty.wait_for()
+        assert empty.inner_text().strip() == 'Nothing queued'
+        assert page.locator('sf-data-table table').count() == 0
+
+    def test_footnote_presence_follows_the_property(self, make_page):
+        page = make_page(DATA_TABLE)
+        footnote = page.locator('sf-data-table .footnote')
+        assert footnote.inner_text().strip() == 'A footnote about the table.'
+        page.evaluate("document.querySelector('sf-data-table').footnote = ''")
+        page.wait_for_function(
+            'document.querySelector("sf-data-table").shadowRoot'
+            '.querySelector(".footnote") === null')
 
 
 class TestDemoPage:

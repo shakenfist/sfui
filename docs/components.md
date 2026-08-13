@@ -56,6 +56,14 @@ one of them follows these rules:
 
 ## Components
 
+- `sf-data-table`: data table built from column and cell
+  descriptors, with optional per-column sorting, in-cell action
+  buttons, and tones, badges and sparkline ribbons for cell
+  content. Named `sf-data-table` rather than `sf-table` because
+  a class must never share a name with an sfui custom element,
+  and the CSS-only `.sf-table` (see page-styles.md) serves
+  server-rendered pages. See the file header in
+  `components/sf-data-table.js` for the contract.
 - `sf-tabs`: tab strip with notification badges. See the file
   header in `components/sf-tabs.js` for the contract.
 - `sf-theme-toggle`: three-state (auto/light/dark) theme
