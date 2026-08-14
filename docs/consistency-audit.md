@@ -59,7 +59,7 @@ those says so and names who checks it instead.
 The static checker is half the safety net; the other half is the
 test suite in `tests/`, which drives the real files in a real
 Chromium via Playwright: `sf-theme.js` cookie and stamping
-behavior, both components' rendering, keyboard handling and
+behavior, the components' rendering, keyboard handling and
 events, and `demo.html` loading console-error-free in both
 themes. `tools/vendor.sh` itself is tested round-trip, including
 its `--check` drift detection. See

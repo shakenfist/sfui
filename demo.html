@@ -32,6 +32,8 @@
     <link rel="stylesheet" href="sf.css">
     <script type="module" src="components/sf-tabs.js"></script>
     <script type="module"
+            src="components/sf-data-table.js"></script>
+    <script type="module"
             src="components/sf-theme-toggle.js"></script>
 </head>
 <body class="sf-page">
@@ -179,6 +181,26 @@
             </div>
             <p class="sf-footnote">Last 7 days, 90 second poll
                 interval.</p>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Repository activity</h2>
+            </div>
+            <p class="sf-footnote">&lt;sf-data-table&gt;: use it
+                when a page builds tables from data and wants
+                column sorting or in-cell actions. The static
+                .sf-table above is the CSS-only version for
+                server-rendered markup; the two must look
+                identical in both palettes.</p>
+            <sf-data-table id="demo-data-table"></sf-data-table>
+            <p class="sf-footnote">Last table event:
+                <span id="data-table-event">none yet</span></p>
+            <p class="sf-footnote">And the component's own empty
+                state, shown when it has no rows:</p>
+            <sf-data-table id="demo-data-table-empty"
+                empty-text="No repositories match"
+                ></sf-data-table>
         </section>
 
         <section class="sf-section">
@@ -377,6 +399,82 @@ tests/test_vendor.py::test_check_detects_drift PASSED
             'sf-tab-selected',
             function (event) {
                 selectedTabLabel.textContent = event.detail.id;
+            });
+
+        var dataTable = document.getElementById(
+            'demo-data-table');
+        var dataTableEvent = document.getElementById(
+            'data-table-event');
+        dataTable.columns = [
+            {label: 'Repository', sortable: true},
+            {label: 'Open issues', sortable: true},
+            {label: 'Failure rate', sortable: true,
+             title: 'Failures across the last seven runs'},
+            {label: 'Suggested', sortable: false},
+            {label: 'Runs', align: 'num', sortable: true},
+            {label: ''}
+        ];
+        dataTable.rows = [
+            [
+                {text: 'shakenfist/shakenfist', href: '#'},
+                {text: '14', href: '#', tone: 'amber',
+                 sortValue: 14, title: 'open issue search'},
+                {sortValue: 43, parts: [
+                    {text: '43%', tone: 'amber'},
+                    {ribbon: ['green', 'red', 'green', 'red',
+                              'green', 'red', 'green']}
+                ]},
+                {badge: '↓ small', tone: 'green'},
+                {text: '120', sortValue: 120},
+                {button: {label: 'Build', action: 'build',
+                          data: {name: 'shakenfist'}}}
+            ],
+            [
+                {text: 'shakenfist/sfui', href: '#'},
+                {text: '0', tone: 'dim', sortValue: 0},
+                {sortValue: 0, parts: [
+                    {text: '0%', tone: 'green'},
+                    {ribbon: ['green', 'green', 'green', 'green',
+                              'green', 'green', 'green']}
+                ]},
+                null,
+                {text: '48', sortValue: 48},
+                {button: {label: 'Build', action: 'build',
+                          data: {name: 'sfui'},
+                          disabled: true}}
+            ],
+            [
+                {text: 'shakenfist/kerbside', href: '#'},
+                {text: '6', href: '#', tone: 'amber',
+                 sortValue: 6},
+                {sortValue: 71, parts: [
+                    {text: '71%', tone: 'red'},
+                    {ribbon: ['red', 'red', 'green', 'red',
+                              'red', 'dim', 'red']}
+                ]},
+                {parts: [
+                    {badge: '↑ large', tone: 'red'},
+                    {badge: 'static', tone: 'orange'}
+                ]},
+                {text: '31', sortValue: 31},
+                {button: {label: 'Build', action: 'build',
+                          data: {name: 'kerbside'}}}
+            ]
+        ];
+        dataTable.footnote = 'Click a column header to sort; a '
+            + 'third click restores the natural order.';
+        dataTable.caption = 'Repository activity';
+        dataTable.addEventListener(
+            'sf-data-table-sort',
+            function (event) {
+                dataTableEvent.textContent = JSON.stringify(
+                    event.detail);
+            });
+        dataTable.addEventListener(
+            'sf-data-table-action',
+            function (event) {
+                dataTableEvent.textContent = JSON.stringify(
+                    event.detail);
             });
     </script>
 </body>
