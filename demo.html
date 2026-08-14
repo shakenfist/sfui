@@ -196,6 +196,11 @@
             <sf-data-table id="demo-data-table"></sf-data-table>
             <p class="sf-footnote">Last table event:
                 <span id="data-table-event">none yet</span></p>
+            <p class="sf-footnote">And the component's own empty
+                state, shown when it has columns but no rows:</p>
+            <sf-data-table id="demo-data-table-empty"
+                empty-text="No repositories match"
+                ></sf-data-table>
         </section>
 
         <section class="sf-section">
@@ -458,6 +463,7 @@ tests/test_vendor.py::test_check_detects_drift PASSED
         ];
         dataTable.footnote = 'Click a column header to sort; a '
             + 'third click restores the natural order.';
+        dataTable.caption = 'Repository activity';
         dataTable.addEventListener(
             'sf-data-table-sort',
             function (event) {

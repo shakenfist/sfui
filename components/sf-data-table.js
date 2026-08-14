@@ -59,12 +59,14 @@
  *              the empty-text attribute.
  *   footnote   Small dim text under the table when non-empty.
  *              Shown only alongside the table: with empty
- *              `rows` the empty state renders alone.
+ *              `rows` the empty state renders alone. Also
+ *              settable as the footnote attribute.
  *   caption    Optional accessible name for the table,
  *              rendered as a visually hidden <caption> so
  *              assistive tech announces what the table holds;
  *              a page whose heading already names the table
- *              can omit it.
+ *              can omit it. Also settable as the caption
+ *              attribute.
  *
  * Sorting never mutates `rows`: the component renders a
  * sorted view, so a page replacing `rows` on a poll tick
@@ -73,7 +75,10 @@
  * replacement (a page must be free to rebuild an equivalent
  * columns array every tick), so a page that switches an
  * element between different table shapes should use one
- * element per shape. A header click cycles
+ * element per shape. If a replacement drops the sorted
+ * column or its sortable flag, the sort silently returns to
+ * the natural order rather than persisting where no header
+ * could announce or clear it. A header click cycles
  * ascending, descending, then back to the natural order. The
  * sort key for a cell is `sortValue` when present, the cell
  * itself for primitives, else the first part's text or badge;
@@ -256,8 +261,10 @@ class SfDataTable extends LitElement {
             color: var(--sf-accent, #6c9eff);
         }
         .action:disabled {
+            background: transparent;
+            border-color: var(--sf-text-dim, #8b8fa3);
+            color: var(--sf-text-dim, #8b8fa3);
             cursor: default;
-            opacity: 0.5;
         }
         .empty {
             color: var(--sf-text-dim, #8b8fa3);
@@ -481,14 +488,21 @@ class SfDataTable extends LitElement {
             title=${title}>${part.text}</span>`;
     }
 
+    /*
+     * The URL parser rather than a regex: the WHATWG parser
+     * strips the tab and newline spellings ('java\tscript:')
+     * that defeat anchored pattern matching, and resolving
+     * against a fixed base classifies relative and fragment
+     * hrefs as https.
+     */
     _safeHref(href) {
-        const scheme = /^\s*([a-z][a-z0-9+.-]*):/i.exec(String(href));
-        return (
-            !scheme ||
-            ['http', 'https', 'mailto'].includes(
-                scheme[1].toLowerCase(),
-            )
-        );
+        let url;
+        try {
+            url = new URL(String(href), 'https://sfui.invalid/');
+        } catch {
+            return false;
+        }
+        return ['http:', 'https:', 'mailto:'].includes(url.protocol);
     }
 
     _badgePart(part) {
@@ -552,16 +566,38 @@ class SfDataTable extends LitElement {
         );
     }
 
+    /*
+     * A columns replacement keeps the sort (pages rebuild an
+     * equivalent columns array every poll tick), unless it
+     * drops the sorted column or its sortable flag, where an
+     * unreachable sort would otherwise persist with no header
+     * announcing it. No sort event: those are user-only.
+     */
+    willUpdate(changed) {
+        if (!changed.has('columns') || this._sortColumn === null) {
+            return;
+        }
+        const column = (this.columns || [])[this._sortColumn];
+        if (!column || !column.sortable) {
+            this._sortColumn = null;
+            this._sortDir = null;
+        }
+    }
+
     _sortedView(rows) {
-        const entries = rows.map((row, index) => ({row, index}));
         if (this._sortColumn === null || this._sortDir === null) {
-            return entries;
+            return rows.map((row, index) => ({row, index}));
         }
         const column = this._sortColumn;
         const direction = this._sortDir === 'desc' ? -1 : 1;
+        const entries = rows.map((row, index) => ({
+            row,
+            index,
+            key: this._sortKey(row[column]),
+        }));
         entries.sort((a, b) => {
-            const keyA = this._sortKey(a.row[column]);
-            const keyB = this._sortKey(b.row[column]);
+            const keyA = a.key;
+            const keyB = b.key;
             const missingA = this._missing(keyA);
             const missingB = this._missing(keyB);
             if (missingA || missingB) {

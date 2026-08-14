@@ -213,11 +213,13 @@ class TestSfDataTable:
             '  return [s.color, s.borderTopColor]; }')
         assert styles == ['rgb(248, 113, 113)', 'rgb(248, 113, 113)']
 
-    def test_untoned_disabled_button_keeps_the_neutral_border(self, make_page):
+    def test_disabled_button_dims_like_sf_btn(self, make_page):
         page = make_page(DATA_TABLE)
         button = page.locator('sf-data-table button.action[disabled]')
-        border = button.evaluate('el => getComputedStyle(el).borderTopColor')
-        assert border == 'rgb(42, 45, 58)'
+        styles = button.evaluate(
+            'el => { const s = getComputedStyle(el);'
+            '  return [s.color, s.borderTopColor]; }')
+        assert styles == ['rgb(139, 143, 163)', 'rgb(139, 143, 163)']
 
     def test_caption_names_the_table(self, make_page):
         page = make_page(DATA_TABLE)
@@ -225,20 +227,26 @@ class TestSfDataTable:
         assert caption.inner_text() == 'Repository activity'
 
     def test_unsafe_href_schemes_render_as_text(self, make_page):
+        """Refusal must survive the control-character spellings the
+        WHATWG URL parser strips, and must not catch relative or
+        fragment hrefs, which are legitimate links."""
         page = make_page(DATA_TABLE)
         page.evaluate(
             """document.querySelector('sf-data-table').rows = [
                 [{text: 'evil', href: 'javascript:alert(1)'},
+                 {text: 'sneaky', href: 'java\\tscript:alert(1)'},
+                 {text: 'datauri', href: 'data:text/html,x'},
                  {text: 'fine', href: 'https://example.com/'},
-                 null, null, null],
+                 {text: 'local', href: '#detail'}],
             ]""")
         page.wait_for_function(
             'document.querySelector("sf-data-table").shadowRoot'
-            '.querySelectorAll("tbody a").length === 1')
-        link = page.locator('sf-data-table tbody a')
-        assert link.inner_text() == 'fine'
-        evil = page.locator('sf-data-table tbody span', has_text='evil')
-        assert evil.count() == 1
+            '.querySelectorAll("tbody a").length === 2')
+        links = page.locator('sf-data-table tbody a')
+        assert links.all_inner_texts() == ['fine', 'local']
+        for refused in ('evil', 'sneaky', 'datauri'):
+            assert page.locator(
+                'sf-data-table tbody span', has_text=refused).count() == 1
 
     def test_sort_cycle_returns_to_natural_order(self, make_page):
         page = make_page(DATA_TABLE)
@@ -265,6 +273,31 @@ class TestSfDataTable:
             {'column': 0, 'direction': 'desc'},
             {'column': 0, 'direction': None},
         ]
+
+    def test_sorting_never_mutates_the_rows_property(self, make_page):
+        page = make_page(DATA_TABLE)
+        page.locator(
+            'sf-data-table th', has_text='Repository').locator('button').click()
+        wait_first_row(page, 'shakenfist/conductor')
+        supplied = page.evaluate(
+            "document.querySelector('sf-data-table').rows.map(r => r[0].text)")
+        assert supplied == [
+            'shakenfist/sfui', 'shakenfist/conductor', 'shakenfist/kerbside']
+
+    def test_dropping_the_sorted_column_resets_the_sort(self, make_page):
+        page = make_page(DATA_TABLE)
+        header = page.locator('sf-data-table th', has_text='Repository')
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/conductor')
+        page.evaluate(
+            """const table = document.querySelector('sf-data-table');
+               const columns = table.columns.slice();
+               columns[0] = {label: 'Repository'};
+               table.columns = columns;""")
+        wait_first_row(page, 'shakenfist/sfui')
+        assert first_column(page) == [
+            'shakenfist/sfui', 'shakenfist/conductor', 'shakenfist/kerbside']
+        assert events(page) == [{'column': 0, 'direction': 'asc'}]
 
     def test_numeric_sort_uses_sort_values(self, make_page):
         page = make_page(DATA_TABLE)
@@ -394,6 +427,7 @@ class TestSfDataTable:
         empty.wait_for()
         assert empty.inner_text().strip() == 'Nothing queued'
         assert page.locator('sf-data-table table').count() == 0
+        assert page.locator('sf-data-table .footnote').count() == 0
 
     def test_footnote_presence_follows_the_property(self, make_page):
         page = make_page(DATA_TABLE)
