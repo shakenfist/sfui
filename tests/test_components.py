@@ -174,7 +174,7 @@ class TestSfDataTable:
         link = page.locator('sf-data-table tbody a').first
         assert link.get_attribute('href') == 'https://example.com/sfui'
         assert link.get_attribute('target') == '_blank'
-        assert link.get_attribute('rel') == 'noopener'
+        assert link.get_attribute('rel') == 'noopener noreferrer'
 
     def test_tone_maps_to_the_token_color(self, make_page):
         page = make_page(DATA_TABLE)

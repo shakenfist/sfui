@@ -227,6 +227,7 @@ class SfDataTable extends LitElement {
             font-size: 0.8em;
         }
         .pill {
+            display: inline-block;
             border: 1px solid currentColor;
             border-radius: var(--sf-radius-sm, 4px);
             font-size: 0.78rem;
@@ -481,7 +482,7 @@ class SfDataTable extends LitElement {
             return html`<a class=${this._classes(part)}
                 href=${part.href}
                 target="_blank"
-                rel="noopener"
+                rel="noopener noreferrer"
                 title=${title}>${part.text}</a>`;
         }
         return html`<span class=${this._classes(part)}
