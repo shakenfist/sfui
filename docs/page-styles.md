@@ -66,6 +66,20 @@ keeps middle-click, open-in-new-tab and copy-link working, which
 a button can never do. Reach for a button when the action changes
 state instead of going anywhere.
 
+Tables exist in both mechanisms, unlike navigation. `.sf-table`
+is for server-rendered markup: a Jinja loop over rows costs
+nothing and works without JavaScript. `<sf-data-table>` is for a
+page that builds rows from data and wants what markup alone
+cannot give it -- column sorting, in-cell action buttons
+reporting through events -- at the price of handing the rows to
+a script. The component copies the class's measurements (its
+th/td rules, and `.sf-btn`, `.sf-empty` and `.sf-footnote` for
+its buttons, empty state and footnote), so the design system has
+one table appearance whichever mechanism draws it; the two carry
+comments saying they must stay in step. The element is named
+`sf-data-table` rather than `sf-table` because of the naming
+rule below.
+
 ## Naming
 
 Naming, matching the element and event conventions:
@@ -136,8 +150,8 @@ come after both.
 ## demo.html
 
 `demo.html`, at the repository root, renders every class and
-modifier `sf.css` defines, plus the `sf-tabs` and
-`sf-theme-toggle` components, so the stylesheet can be reviewed
+modifier `sf.css` defines, plus every component in
+`components/`, so the stylesheet can be reviewed
 in both palettes without a consumer application. It is the
 canonical repository's safety net against an unreviewed
 primitive: CI lints the CSS and checks mechanically that every

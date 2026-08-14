@@ -43,7 +43,7 @@
                 ]},
                 {text: '42', sortValue: 42},
                 {button: {label: 'Build', action: 'build',
-                    data: {name: 'sfui'}}},
+                    data: {name: 'sfui'}, tone: 'red'}},
             ],
             [
                 {text: 'shakenfist/conductor',
@@ -69,6 +69,7 @@
                     tone: 'amber', sortValue: 11},
                 {sortValue: 8, parts: [
                     {badge: '↓ small', tone: 'green'},
+                    null,
                     {badge: 'static', tone: 'orange'},
                 ]},
                 {text: '7', sortValue: 7},
@@ -76,6 +77,7 @@
             ],
         ];
         table.footnote = 'A footnote about the table.';
+        table.caption = 'Repository activity';
         window.events = [];
         table.addEventListener('sf-data-table-action', (event) => {
             window.events.push(event.detail);

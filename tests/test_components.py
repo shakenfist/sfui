@@ -192,6 +192,54 @@ class TestSfDataTable:
         block = page.locator('sf-data-table span', has_text='no data')
         assert block.evaluate('el => getComputedStyle(el).display') == 'block'
 
+    def test_null_parts_are_skipped(self, make_page):
+        """The badge cell in the harness carries a null between its two
+        badges, the shape a conditional parts list naturally takes."""
+        page = make_page(DATA_TABLE)
+        cell = page.locator('sf-data-table tbody tr').nth(2).locator('td').nth(2)
+        assert cell.locator('.part').count() == 2
+
+    def test_ribbon_boxes_take_tone_backgrounds(self, make_page):
+        page = make_page(DATA_TABLE)
+        box = page.locator('sf-data-table .ribbon span').first
+        color = box.evaluate('el => getComputedStyle(el).backgroundColor')
+        assert color == 'rgb(74, 222, 128)'
+
+    def test_toned_button_takes_the_tone(self, make_page):
+        page = make_page(DATA_TABLE)
+        button = page.locator('sf-data-table button.action:enabled')
+        styles = button.evaluate(
+            'el => { const s = getComputedStyle(el);'
+            '  return [s.color, s.borderTopColor]; }')
+        assert styles == ['rgb(248, 113, 113)', 'rgb(248, 113, 113)']
+
+    def test_untoned_disabled_button_keeps_the_neutral_border(self, make_page):
+        page = make_page(DATA_TABLE)
+        button = page.locator('sf-data-table button.action[disabled]')
+        border = button.evaluate('el => getComputedStyle(el).borderTopColor')
+        assert border == 'rgb(42, 45, 58)'
+
+    def test_caption_names_the_table(self, make_page):
+        page = make_page(DATA_TABLE)
+        caption = page.locator('sf-data-table caption')
+        assert caption.inner_text() == 'Repository activity'
+
+    def test_unsafe_href_schemes_render_as_text(self, make_page):
+        page = make_page(DATA_TABLE)
+        page.evaluate(
+            """document.querySelector('sf-data-table').rows = [
+                [{text: 'evil', href: 'javascript:alert(1)'},
+                 {text: 'fine', href: 'https://example.com/'},
+                 null, null, null],
+            ]""")
+        page.wait_for_function(
+            'document.querySelector("sf-data-table").shadowRoot'
+            '.querySelectorAll("tbody a").length === 1')
+        link = page.locator('sf-data-table tbody a')
+        assert link.inner_text() == 'fine'
+        evil = page.locator('sf-data-table tbody span', has_text='evil')
+        assert evil.count() == 1
+
     def test_sort_cycle_returns_to_natural_order(self, make_page):
         page = make_page(DATA_TABLE)
         assert first_column(page) == [
@@ -211,7 +259,7 @@ class TestSfDataTable:
         page.wait_for_function('window.events.length === 3')
         assert first_column(page) == [
             'shakenfist/sfui', 'shakenfist/conductor', 'shakenfist/kerbside']
-        assert header.get_attribute('aria-sort') is None
+        assert header.get_attribute('aria-sort') == 'none'
         assert events(page) == [
             {'column': 0, 'direction': 'asc'},
             {'column': 0, 'direction': 'desc'},
@@ -261,11 +309,80 @@ class TestSfDataTable:
             'action': 'build', 'data': {'name': 'sfui'}, 'rowIndex': 0}
 
     def test_disabled_button_is_silent(self, make_page):
+        """A synthetic click event, not el.click(): the browser drops
+        activations of a disabled button before listeners run, so
+        only a dispatched event reaches the component's guard."""
         page = make_page(DATA_TABLE)
         disabled = page.locator('sf-data-table button.action[disabled]')
         assert disabled.count() == 1
-        disabled.evaluate('el => el.click()')
+        disabled.evaluate('el => el.dispatchEvent(new MouseEvent("click"))')
         assert events(page) == []
+
+    def test_programmatic_assignments_are_silent(self, make_page):
+        page = make_page(DATA_TABLE)
+        page.evaluate(
+            """const table = document.querySelector('sf-data-table');
+               table.columns = table.columns.slice();
+               table.rows = table.rows.slice();
+               table.footnote = 'changed';""")
+        page.wait_for_function(
+            'document.querySelector("sf-data-table").shadowRoot'
+            '.querySelector(".footnote").textContent === "changed"')
+        assert events(page) == []
+
+    def test_sort_survives_the_empty_state(self, make_page):
+        """The documented reason emptyText exists: a rows -> [] -> rows
+        round trip through the empty state keeps the viewer's sort."""
+        page = make_page(DATA_TABLE)
+        header = page.locator('sf-data-table th', has_text='Repository')
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/conductor')
+        page.evaluate(
+            """const table = document.querySelector('sf-data-table');
+               window.savedRows = table.rows;
+               table.rows = [];
+               table.emptyText = 'nothing';""")
+        page.locator('sf-data-table .empty').wait_for()
+        page.evaluate(
+            "document.querySelector('sf-data-table').rows = window.savedRows")
+        wait_first_row(page, 'shakenfist/conductor')
+        assert header.get_attribute('aria-sort') == 'ascending'
+
+    def test_sort_key_falls_back_to_first_part_text(self, make_page):
+        """No sortValue anywhere: case-insensitive text comparison of
+        the first part's text, with ties kept in natural order."""
+        page = make_page(DATA_TABLE)
+        page.evaluate(
+            """document.querySelector('sf-data-table').rows = [
+                [{text: 'Gamma'}, {text: 'tie'}, null, null, null],
+                [{text: 'alpha'}, {text: 'tie'}, null, null, null],
+                [{text: 'Beta'}, {text: 'tie'}, null, null, null],
+            ]""")
+        wait_first_row(page, 'Gamma')
+        page.locator(
+            'sf-data-table th', has_text='Repository').locator('button').click()
+        wait_first_row(page, 'alpha')
+        assert first_column(page) == ['alpha', 'Beta', 'Gamma']
+        page.locator(
+            'sf-data-table th', has_text='Open Issues').locator('button').click()
+        wait_first_row(page, 'Gamma')
+        assert first_column(page) == ['Gamma', 'alpha', 'Beta']
+
+    def test_empty_rows_without_empty_text_render_nothing(self, make_page):
+        page = make_page(DATA_TABLE)
+        page.evaluate("document.querySelector('sf-data-table').rows = []")
+        page.wait_for_function(
+            'document.querySelector("sf-data-table").shadowRoot'
+            '.querySelector("table") === null')
+        assert page.locator('sf-data-table .empty').count() == 0
+        assert page.locator('sf-data-table .footnote').count() == 0
+
+    def test_idle_sortable_headers_announce_none(self, make_page):
+        page = make_page(DATA_TABLE)
+        sortable = page.locator('sf-data-table th', has_text='Repository')
+        assert sortable.get_attribute('aria-sort') == 'none'
+        fixed = page.locator('sf-data-table th', has_text='Actions')
+        assert fixed.get_attribute('aria-sort') is None
 
     def test_empty_rows_render_the_empty_text(self, make_page):
         page = make_page(DATA_TABLE)

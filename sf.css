@@ -295,6 +295,11 @@
         padding: 1.2rem 1.3rem;
     }
 
+    /* components/sf-data-table.js is the component version of
+       this table, for pages that build rows from data, and
+       copies these measurements rule for rule. The two must
+       stay visually in step: a change here belongs there as
+       well. */
     .sf-table {
         width: 100%;
         border-collapse: collapse;

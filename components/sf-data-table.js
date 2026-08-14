@@ -28,7 +28,10 @@
  *                {text, tone, href, title, small, block}
  *                  a text span; with `href` a link opened in
  *                  a new tab. `small` shrinks it, `block`
- *                  puts it on its own line.
+ *                  puts it on its own line. `href` is trusted
+ *                  page data, though schemes other than http,
+ *                  https and mailto are refused and render as
+ *                  plain text.
  *                {badge: text, tone, title}
  *                  an outline pill.
  *                {ribbon: [tone, ...], title}
@@ -40,7 +43,9 @@
  *                          tone}}
  *                  an action button; see the event below.
  *              An object cell without `parts` is treated as a
- *              single part. Tones are 'accent', 'green',
+ *              single part, and null parts are skipped, so a
+ *              page can write a conditional parts list without
+ *              filtering it. Tones are 'accent', 'green',
  *              'amber', 'red', 'purple', 'pink', 'teal',
  *              'orange' or 'dim', naming the matching design
  *              token; anything else falls back to the default
@@ -53,10 +58,22 @@
  *              sort state across refreshes. Also settable as
  *              the empty-text attribute.
  *   footnote   Small dim text under the table when non-empty.
+ *              Shown only alongside the table: with empty
+ *              `rows` the empty state renders alone.
+ *   caption    Optional accessible name for the table,
+ *              rendered as a visually hidden <caption> so
+ *              assistive tech announces what the table holds;
+ *              a page whose heading already names the table
+ *              can omit it.
  *
  * Sorting never mutates `rows`: the component renders a
  * sorted view, so a page replacing `rows` on a poll tick
- * keeps the viewer's chosen order. A header click cycles
+ * keeps the viewer's chosen order. Sort state is tied to
+ * column indices and deliberately survives a `columns`
+ * replacement (a page must be free to rebuild an equivalent
+ * columns array every tick), so a page that switches an
+ * element between different table shapes should use one
+ * element per shape. A header click cycles
  * ascending, descending, then back to the natural order. The
  * sort key for a cell is `sortValue` when present, the cell
  * itself for primitives, else the first part's text or badge;
@@ -104,6 +121,7 @@ class SfDataTable extends LitElement {
         rows: {attribute: false},
         emptyText: {type: String, attribute: 'empty-text'},
         footnote: {type: String},
+        caption: {type: String},
         _sortColumn: {state: true},
         _sortDir: {state: true},
     };
@@ -111,8 +129,13 @@ class SfDataTable extends LitElement {
     /*
      * sf.css's .sf-table is the CSS-only version of this look,
      * for server-rendered pages, and the th/td rules below copy
-     * it measurement for measurement. The two must stay visually
-     * in step: a change here belongs there as well.
+     * it measurement for measurement, as .action, .empty and
+     * .footnote copy .sf-btn, .sf-empty and .sf-footnote. All
+     * must stay visually in step: a change here belongs there
+     * as well. The one deliberate departure is .pill, an
+     * outline on currentColor rather than .sf-badge's tinted
+     * fill: a badge sits between mono digits in a dense cell,
+     * where a filled block overwhelms the row it annotates.
      */
     static styles = css`
         :host {
@@ -209,46 +232,52 @@ class SfDataTable extends LitElement {
         .ribbon {
             display: inline-flex;
             gap: 2px;
+            color: var(--sf-text-dim, #8b8fa3);
         }
         .ribbon span {
             width: 3px;
             height: 8px;
             border-radius: 1px;
-            color: var(--sf-text-dim, #8b8fa3);
             background: currentColor;
         }
-        button.action {
+        .action {
             appearance: none;
-            background: none;
-            border: 1px solid currentColor;
+            background: transparent;
+            border: 1px solid var(--sf-border, #2a2d3a);
             border-radius: var(--sf-radius-sm, 4px);
-            color: var(--sf-text-dim, #8b8fa3);
+            color: var(--sf-text, #e1e4ed);
             cursor: pointer;
-            font: inherit;
+            font-family: inherit;
             font-size: 0.78rem;
-            padding: 2px 10px;
+            padding: 0.15rem 0.6rem;
         }
-        button.action:hover:enabled {
-            background: color-mix(
-                in srgb,
-                currentColor 12%,
-                transparent
-            );
+        .action:hover:enabled {
+            border-color: var(--sf-accent, #6c9eff);
+            color: var(--sf-accent, #6c9eff);
         }
-        button.action:disabled {
+        .action:disabled {
             cursor: default;
             opacity: 0.5;
         }
         .empty {
             color: var(--sf-text-dim, #8b8fa3);
-            font-size: 0.88rem;
+            font-size: 0.95rem;
             padding: 2rem;
             text-align: center;
         }
         .footnote {
             color: var(--sf-text-dim, #8b8fa3);
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             margin: 0.6rem 0 0;
+        }
+        caption {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
         }
         .accent,
         a.accent:hover {
@@ -286,6 +315,17 @@ class SfDataTable extends LitElement {
         a.dim:hover {
             color: var(--sf-text-dim, #8b8fa3);
         }
+        .action.accent,
+        .action.green,
+        .action.amber,
+        .action.red,
+        .action.purple,
+        .action.pink,
+        .action.teal,
+        .action.orange,
+        .action.dim {
+            border-color: currentColor;
+        }
     `;
 
     constructor() {
@@ -294,6 +334,7 @@ class SfDataTable extends LitElement {
         this.rows = [];
         this.emptyText = '';
         this.footnote = '';
+        this.caption = '';
         this._sortColumn = null;
         this._sortDir = null;
     }
@@ -310,6 +351,11 @@ class SfDataTable extends LitElement {
         return html`
             <div class="scroll">
                 <table>
+                    ${
+                        this.caption
+                            ? html`<caption>${this.caption}</caption>`
+                            : nothing
+                    }
                     <thead>
                         <tr>
                             ${columns.map((column, index) =>
@@ -359,7 +405,7 @@ class SfDataTable extends LitElement {
                         ? this._sortDir === 'asc'
                             ? 'ascending'
                             : 'descending'
-                        : nothing
+                        : 'none'
                 }>
                 <button @click=${() => this._sort(index)}>
                     ${column.label}${
@@ -393,6 +439,9 @@ class SfDataTable extends LitElement {
     }
 
     _part(part, rowIndex) {
+        if (part === null || part === undefined) {
+            return nothing;
+        }
         if (part.button) {
             return this._buttonPart(part.button, rowIndex);
         }
@@ -421,7 +470,7 @@ class SfDataTable extends LitElement {
 
     _textPart(part) {
         const title = part.title || nothing;
-        if (part.href) {
+        if (part.href && this._safeHref(part.href)) {
             return html`<a class=${this._classes(part)}
                 href=${part.href}
                 target="_blank"
@@ -430,6 +479,16 @@ class SfDataTable extends LitElement {
         }
         return html`<span class=${this._classes(part)}
             title=${title}>${part.text}</span>`;
+    }
+
+    _safeHref(href) {
+        const scheme = /^\s*([a-z][a-z0-9+.-]*):/i.exec(String(href));
+        return (
+            !scheme ||
+            ['http', 'https', 'mailto'].includes(
+                scheme[1].toLowerCase(),
+            )
+        );
     }
 
     _badgePart(part) {

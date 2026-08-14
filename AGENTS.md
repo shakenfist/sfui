@@ -37,8 +37,8 @@ Things that trip up assistants:
   and marked as such in `docs/consistency-audit.md`); run it (or
   `pre-commit run --all-files`, which includes it) before
   proposing changes.
-- `demo.html` renders every `sf.css` primitive and both
-  components. It must be served over HTTP (`python3 -m
+- `demo.html` renders every `sf.css` primitive and every
+  component. It must be served over HTTP (`python3 -m
   http.server` from the repository root) -- its components are ES
   modules and will not load from `file://`. Add a new primitive
   or component to it in the same change that introduces it: the
