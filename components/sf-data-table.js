@@ -13,12 +13,16 @@
  * content is always rendered as text.
  *
  * Properties:
- *   columns    Array of {label, align, sortable, title}.
- *              `align: 'num'` right-aligns the column for
- *              numeric data; anything else is left-aligned.
+ *   columns    Array of {label, align, sortable, sorted,
+ *              title}. `align: 'num'` right-aligns the column
+ *              for numeric data; anything else is left-aligned.
  *              `sortable: true` makes the header a button the
- *              viewer can sort by. `title` becomes a header
- *              tooltip. All but `label` are optional.
+ *              viewer can sort by. `sorted: 'asc'` or
+ *              `sorted: 'desc'` declares that the rows already
+ *              arrive in that column's order, which is what
+ *              lets the first paint name the order it is
+ *              showing (see Sorting below). `title` becomes a
+ *              header tooltip. All but `label` are optional.
  *   rows       Array of rows, one array of cells per row, in
  *              the order the page considers natural (the
  *              order sorting returns to). A cell is either a
@@ -78,13 +82,35 @@
  * element per shape. If a replacement drops the sorted
  * column or its sortable flag, the sort silently returns to
  * the natural order rather than persisting where no header
- * could announce or clear it. A header click cycles
- * ascending, descending, then back to the natural order. The
- * sort key for a cell is `sortValue` when present, the cell
- * itself for primitives, else the first part's text or badge;
- * numbers compare numerically when both keys are numbers,
- * anything else compares as case-insensitive text, and
- * missing keys sort last in both directions.
+ * could announce or clear it. The sort key for a cell is
+ * `sortValue` when present, the cell itself for primitives,
+ * else the first part's text or badge; numbers compare
+ * numerically when both keys are numbers, anything else
+ * compares as case-insensitive text, and missing keys sort
+ * last in both directions.
+ *
+ * Two things a table must say before it is touched: that its
+ * columns sort at all, and which order it is currently in.
+ * Every sortable header therefore carries a muted double
+ * arrow, and the column the table is ordered by carries a
+ * solid one instead. Before the viewer sorts anything, that
+ * ordered column is whichever column declares `sorted`, which
+ * the page uses to name the natural order it supplies -- the
+ * component takes the declaration at its word and reorders
+ * nothing, so a page that declares an order its rows are not
+ * in is lying to the viewer on its own account. A natural
+ * order with several keys names its primary one (ties then
+ * fall the way the page supplied them), and a column need not
+ * be `sortable` to be declared: a table the viewer cannot
+ * re-sort can still say what it is sorted by. Only the first
+ * declaration counts; later ones are ignored.
+ *
+ * A header click cycles ascending, descending, then back to
+ * the natural order. The declared column is the exception,
+ * having only two states to offer rather than three: a click
+ * flips it to the opposite direction, and a click from
+ * anywhere else returns the table to the natural order it
+ * already describes.
  *
  * Events:
  *   sf-data-table-action  Fired when an enabled button part
@@ -99,7 +125,10 @@
  *                         when the page replaces data), with
  *                         {detail: {column, direction}} where
  *                         direction is 'asc', 'desc' or null
- *                         for the return to natural order.
+ *                         for the return to natural order --
+ *                         null even where a column declares
+ *                         that order, since the page named it
+ *                         and knows what it is.
  *
  * Styling comes entirely from the sfui design tokens
  * (../tokens.css), with fallbacks matching the token defaults
@@ -205,6 +234,22 @@ class SfDataTable extends LitElement {
         }
         .arrow {
             margin-left: 0.35em;
+        }
+        /*
+         * The ordered column is the one fact a viewer reads
+         * before anything else in the table, so it is the one
+         * header lifted out of the dim header row, and its
+         * arrow is the accent rather than the text color: the
+         * muted double arrow the other sortable headers carry
+         * is the same glyph weight, and only color separates
+         * "you may sort by this" from "you are sorted by
+         * this".
+         */
+        th.sorted {
+            color: var(--sf-text, #e1e4ed);
+        }
+        th.sorted .arrow {
+            color: var(--sf-accent, #6c9eff);
         }
         a {
             color: var(--sf-accent, #6c9eff);
@@ -395,39 +440,60 @@ class SfDataTable extends LitElement {
     }
 
     _headerCell(column, index) {
-        const cls = column.align === 'num' ? 'num' : nothing;
+        const sort = this._currentSort();
+        const active = sort !== null && sort.column === index;
+        const classes = [];
+        if (column.align === 'num') {
+            classes.push('num');
+        }
+        if (active) {
+            classes.push('sorted');
+        }
+        const cls = classes.length ? classes.join(' ') : nothing;
         const title = column.title || nothing;
+        const marker = this._marker(column, active, sort);
+        const announced = active
+            ? sort.direction === 'asc'
+                ? 'ascending'
+                : 'descending'
+            : column.sortable
+              ? 'none'
+              : nothing;
         if (!column.sortable) {
             return html`
-                <th scope="col" class=${cls} title=${title}>
-                    ${column.label}</th>`;
+                <th scope="col"
+                    class=${cls}
+                    title=${title}
+                    aria-sort=${announced}>
+                    ${column.label}${marker}</th>`;
         }
-        const active =
-            this._sortColumn === index && this._sortDir !== null;
         return html`
             <th scope="col"
                 class=${cls}
                 title=${title}
-                aria-sort=${
-                    active
-                        ? this._sortDir === 'asc'
-                            ? 'ascending'
-                            : 'descending'
-                        : 'none'
-                }>
-                <button @click=${() => this._sort(index)}>
-                    ${column.label}${
-                        active
-                            ? html`<span class="arrow"
-                                  aria-hidden="true">${
-                                      this._sortDir === 'asc'
-                                          ? '▲'
-                                          : '▼'
-}</span>`
-                            : nothing
-                    }
+                aria-sort=${announced}>
+                <button @click=${() => this._cycle(index)}>
+                    ${column.label}${marker}
                 </button>
             </th>`;
+    }
+
+    /*
+     * Decorative in both spellings: the direction is on the th
+     * as aria-sort, and the double arrow says nothing a screen
+     * reader cannot get from the header being a button.
+     */
+    _marker(column, active, sort) {
+        if (active) {
+            return html`<span class="arrow" aria-hidden="true">${
+                sort.direction === 'asc' ? '▲' : '▼'
+            }</span>`;
+        }
+        if (!column.sortable) {
+            return nothing;
+        }
+        return html`<span class="arrow hint"
+            aria-hidden="true">⇅</span>`;
     }
 
     _bodyCell(cell, columnIndex, rowIndex) {
@@ -548,8 +614,52 @@ class SfDataTable extends LitElement {
         );
     }
 
-    _sort(index) {
-        if (this._sortColumn !== index) {
+    /*
+     * The order the table is in: the viewer's sort where they
+     * have made one, else whatever the page declared about the
+     * rows it handed over, else nothing to say.
+     */
+    _currentSort() {
+        if (this._sortColumn !== null && this._sortDir !== null) {
+            return {
+                column: this._sortColumn,
+                direction: this._sortDir,
+            };
+        }
+        return this._declaredSort();
+    }
+
+    _declaredSort() {
+        const columns = this.columns || [];
+        for (let index = 0; index < columns.length; index++) {
+            const declared = (columns[index] || {}).sorted;
+            if (declared === 'asc' || declared === 'desc') {
+                return {column: index, direction: declared};
+            }
+        }
+        return null;
+    }
+
+    /*
+     * Three states for an ordinary column, two for the declared
+     * one: it starts in its declared direction, so the click
+     * that would have set that direction has nothing to change
+     * and returns to the natural order instead -- which is the
+     * same thing said from the other side, and reachable from a
+     * sort on any other column too.
+     */
+    _cycle(index) {
+        const declared = this._declaredSort();
+        if (declared !== null && declared.column === index) {
+            if (this._sortColumn === null) {
+                this._sortColumn = index;
+                this._sortDir =
+                    declared.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                this._sortColumn = null;
+                this._sortDir = null;
+            }
+        } else if (this._sortColumn !== index) {
             this._sortColumn = index;
             this._sortDir = 'asc';
         } else if (this._sortDir === 'asc') {

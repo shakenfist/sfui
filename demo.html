@@ -411,7 +411,8 @@ tests/test_vendor.py::test_check_detects_drift PASSED
             {label: 'Failure rate', sortable: true,
              title: 'Failures across the last seven runs'},
             {label: 'Suggested', sortable: false},
-            {label: 'Runs', align: 'num', sortable: true},
+            {label: 'Runs', align: 'num', sortable: true,
+             sorted: 'desc'},
             {label: ''}
         ];
         dataTable.rows = [
@@ -461,8 +462,10 @@ tests/test_vendor.py::test_check_detects_drift PASSED
                           data: {name: 'kerbside'}}}
             ]
         ];
-        dataTable.footnote = 'Click a column header to sort; a '
-            + 'third click restores the natural order.';
+        dataTable.footnote = 'Rows arrive sorted by runs, which '
+            + 'the Runs column declares; a muted double arrow '
+            + 'marks the other columns you can sort by, and a '
+            + 'third click restores the declared order.';
         dataTable.caption = 'Repository activity';
         dataTable.addEventListener(
             'sf-data-table-sort',

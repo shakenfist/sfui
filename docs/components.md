@@ -59,7 +59,11 @@ one of them follows these rules:
 - `sf-data-table`: data table built from column and cell
   descriptors, with optional per-column sorting, in-cell action
   buttons, and tones, badges and sparkline ribbons for cell
-  content. Named `sf-data-table` rather than `sf-table` because
+  content. A sortable header advertises itself with a muted
+  double arrow, and a page handing over pre-sorted rows declares
+  which column they are sorted by, so the first paint names the
+  order the viewer is looking at rather than leaving them to
+  guess. Named `sf-data-table` rather than `sf-table` because
   a class must never share a name with an sfui custom element,
   and the CSS-only `.sf-table` (see page-styles.md) serves
   server-rendered pages. See the file header in
