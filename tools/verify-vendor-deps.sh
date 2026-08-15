@@ -26,13 +26,13 @@ status=0
 while read -r expected file; do
     [ -z "$file" ] && continue
     target="$src/$file"
-    
+
     if [ ! -f "$target" ]; then
         echo "Error: $file is missing from the repository root" >&2
         status=1
         continue
     fi
-    
+
     actual="$(hash_file "$target")"
     if [ "$actual" != "$expected" ]; then
         echo "CRITICAL: SHA-256 mismatch for $file" >&2

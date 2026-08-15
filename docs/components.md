@@ -70,3 +70,11 @@ one of them follows these rules:
   preference control, wired by the host page to `sf-theme.js`.
   See the file header in `components/sf-theme-toggle.js` for the
   contract.
+
+## Content Security Policy (CSP)
+
+sfui is fully compatible with strict Content Security Policies (CSP) and does not require dangerous directives:
+
+1. **No `unsafe-eval` required:** Neither the Lit standard runtime nor the custom components use dynamic code evaluation (such as `eval()` or `Function()`).
+2. **No `unsafe-inline` required for styles:** All component styles are compiled by Lit at load time and inserted safely via Constructable Stylesheets (supported by modern browsers) or style tags securely managed by the Lit runtime.
+3. **Module scripts:** Components are shipped as standard ES modules, requiring the host page's CSP to allow `script-src` policies compatible with module loading (e.g. `self` or explicit source domains).
