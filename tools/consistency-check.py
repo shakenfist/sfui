@@ -116,6 +116,24 @@ def parse_layout_entries(vendoring_md):
     return entries
 
 
+def parse_vendored_dependencies(vendoring_md):
+    """Parse the file names from the Vendored dependencies section of
+    docs/vendoring.md."""
+    section = re.search(r'## Vendored dependencies\n(.*?)\n## ', vendoring_md, flags=re.DOTALL)
+    if not section:
+        return None
+    return re.findall(r'^- `(\S+)`:', section.group(1), flags=re.MULTILINE)
+
+
+def parse_pinned_files(verify_sh):
+    """Parse the file names from the checksum list of
+    tools/verify-vendor-deps.sh."""
+    match = re.search(r'\nchecksums="\n(.*?)\n"', verify_sh, flags=re.DOTALL)
+    if not match:
+        return None
+    return [line.split()[-1] for line in match.group(1).splitlines() if line.strip()]
+
+
 class Checker:
     def __init__(self, repo):
         self.repo = repo
@@ -158,6 +176,7 @@ class Checker:
         self.check_reserved_class_names(sf_css)
         self.check_demo_coverage(sf_css, demo_html)
         self.check_vendor_list()
+        self.check_dependency_pins()
         return self.findings
 
     def check_token_parity(self, dark, light):
@@ -273,6 +292,30 @@ class Checker:
         for name in vendored:
             if not (self.repo / name).is_file():
                 self.finding('tools/vendor.sh', f'{name} is listed for vendoring but does not exist')
+
+    def check_dependency_pins(self):
+        """Every third-party bundle docs/vendoring.md documents is
+        pinned by tools/verify-vendor-deps.sh, and vice versa.
+
+        The checksum list is a third copy of part of the vendored set,
+        after tools/vendor.sh and the Layout list, so it drifts for the
+        same reason those two do -- and its failure mode is silent: a
+        library added to the other two but not here simply ships
+        unpinned."""
+        documented = parse_vendored_dependencies(self.read('docs/vendoring.md'))
+        pinned = parse_pinned_files(self.read('tools/verify-vendor-deps.sh'))
+        if documented is None:
+            self.finding('docs/vendoring.md', 'could not parse the Vendored dependencies list')
+            return
+        if pinned is None:
+            self.finding('tools/verify-vendor-deps.sh', 'could not parse the checksums list')
+            return
+        for name in sorted(set(documented) - set(pinned)):
+            self.finding('tools/verify-vendor-deps.sh',
+                         f'{name} is documented as vendored but has no pinned checksum')
+        for name in sorted(set(pinned) - set(documented)):
+            self.finding('docs/vendoring.md',
+                         f'{name} has a pinned checksum but is not in the Vendored dependencies list')
 
 
 def main():

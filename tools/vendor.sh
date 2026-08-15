@@ -18,6 +18,12 @@
 # --check diffs instead of copying and exits non-zero if the
 # vendored copy does not match the current source tree, which makes
 # it usable as a consumer CI step or pre-commit hook.
+#
+# Copying is gated on tools/verify-vendor-deps.sh, so a tampered or
+# half-synced checkout fails here rather than propagating the damage
+# into a consumer's static assets. A vendored copy carries no
+# digests of its own, so this is the last point at which the
+# vendored bundles are checked before they are served.
 
 set -e
 
@@ -65,6 +71,8 @@ if [ -n "$(git -C "$src" status --porcelain -- "${files[@]}" components)" ]; the
     echo "sfui: warning: vendoring from a dirty source tree;" \
          ".sfui-commit will not describe these contents" >&2
 fi
+
+"$src/tools/verify-vendor-deps.sh" "$src" > /dev/null
 
 mkdir -p "$target/components"
 for f in "${files[@]}"; do

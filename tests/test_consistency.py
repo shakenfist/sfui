@@ -72,6 +72,11 @@ files=(
     sf.css
 )
 """,
+    'tools/verify-vendor-deps.sh': """
+checksums="
+0000000000000000000000000000000000000000000000000000000000000000  thing.min.js
+"
+""",
     'docs/vendoring.md': """
 ## Layout
 
@@ -79,6 +84,10 @@ files=(
     tokens.css        the tokens
     sf.css            the page styles
     components/       the components
+
+## Vendored dependencies
+
+- `thing.min.js`: the thing, unmodified from somewhere.
 
 ## Something else
 """,
@@ -217,6 +226,26 @@ def test_vendor_list_and_layout_disagree(tmp_path):
 def test_vendored_file_must_exist(tmp_path):
     assert any('README.md is listed for vendoring but does not exist' in finding
                for finding in findings(tmp_path, {'README.md': None}))
+
+
+def test_documented_dependency_without_a_pinned_checksum(tmp_path):
+    verify = CLEAN['tools/verify-vendor-deps.sh'].replace('thing.min.js', 'other.min.js')
+    found = findings(tmp_path, {'tools/verify-vendor-deps.sh': verify})
+    assert any('thing.min.js is documented as vendored but has no pinned checksum' in finding
+               for finding in found)
+    assert any('other.min.js has a pinned checksum but is not in the Vendored dependencies list'
+               in finding for finding in found)
+
+
+def test_unparseable_checksum_list(tmp_path):
+    assert any('could not parse the checksums list' in finding
+               for finding in findings(tmp_path, {'tools/verify-vendor-deps.sh': '# nothing\n'}))
+
+
+def test_unparseable_vendored_dependency_list(tmp_path):
+    vendoring = CLEAN['docs/vendoring.md'].replace('## Vendored dependencies', '## Other')
+    assert any('could not parse the Vendored dependencies list' in finding
+               for finding in findings(tmp_path, {'docs/vendoring.md': vendoring}))
 
 
 def test_extract_block_handles_nesting():

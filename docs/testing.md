@@ -9,9 +9,11 @@ static binary, and the tests are Python.
 
 `pre-commit run --all-files` runs everything: shellcheck over
 `tools/`, actionlint over the workflows, Biome over the
-JavaScript and CSS, and the consistency checker. Install
-pre-commit with `pip install pre-commit` and enable it with
-`pre-commit install`.
+JavaScript and CSS, the consistency checker, and
+`tools/verify-vendor-deps.sh`, which hashes the vendored Lit and
+morphdom bundles against the digests pinned in its own source
+(see [vendoring.md](vendoring.md)). Install pre-commit with `pip
+install pre-commit` and enable it with `pre-commit install`.
 
 Biome (https://biomejs.dev) lints and format-checks the
 JavaScript and CSS. `tools/run-biome.sh` fetches the pinned,
@@ -84,6 +86,12 @@ What is covered:
 - `tests/test_consistency.py`: the consistency checker against a
   synthetic repository, breaking each rule in turn, plus a clean
   run against the real tree.
+- `tests/test_verify_vendor_deps.py`:
+  `tools/verify-vendor-deps.sh` against a fixture copy of the
+  vendored bundles -- clean, byte-modified and missing -- plus
+  the re-derivation property, that stripping each recorded
+  provenance header leaves a payload hashing to the recorded
+  upstream digest.
 
 The browser test pages live in `tests/pages/`; they play the
 host-page role from the component contract, handing components

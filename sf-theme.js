@@ -31,6 +31,7 @@
  *                    deletes the cookie; any value other than
  *                    'auto', 'light' or 'dark' throws. The
  *                    cookie is sf-theme, Path=/, SameSite=Lax,
+ *                    Secure when the page is served over https,
  *                    expiring in one year.
  */
 (function () {
@@ -77,6 +78,16 @@
                 );
             }
             preference = value;
+            // Conditional because an unconditional Secure would
+            // stop the cookie being stored at all on an http-only
+            // deployment, and the preference would appear not to
+            // persist. The asymmetry to know about: a browser will
+            // not let an http page overwrite a Secure cookie of the
+            // same name, so on a mixed-scheme origin a preference
+            // set over https cannot be changed back over http --
+            // the write is silently dropped. Both current consumers
+            // are single-scheme, so this is noted rather than
+            // handled.
             var secure =
                 window.location.protocol === 'https:' ? '; Secure' : '';
             if (value === 'auto') {

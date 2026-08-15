@@ -73,8 +73,43 @@ one of them follows these rules:
 
 ## Content Security Policy (CSP)
 
-sfui is fully compatible with strict Content Security Policies (CSP) and does not require dangerous directives:
+sfui needs no dangerous CSP directives, but two of its
+properties do constrain the policy a host page can write.
 
-1. **No `unsafe-eval` required:** Neither the Lit standard runtime nor the custom components use dynamic code evaluation (such as `eval()` or `Function()`).
-2. **No `unsafe-inline` required for styles:** All component styles are compiled by Lit at load time and inserted safely via Constructable Stylesheets (supported by modern browsers) or style tags securely managed by the Lit runtime.
-3. **Module scripts:** Components are shipped as standard ES modules, requiring the host page's CSP to allow `script-src` policies compatible with module loading (e.g. `self` or explicit source domains).
+- **No `unsafe-eval`.** Neither the vendored Lit runtime nor
+  the components evaluate code at runtime: there is no `eval()`
+  and no `new Function()` in any shipped file.
+- **Styles: usually no `unsafe-inline`, sometimes a nonce.**
+  Component styles are adopted as Constructable Stylesheets
+  where the browser has them (Chrome 73+, Firefox 101+, Safari
+  16.4+), and `style-src` does not govern those at all. Where
+  it does not -- an engine without `adoptedStyleSheets` -- Lit
+  falls back to inserting a `<style>` element, which is exactly
+  what `style-src` does govern, and that path needs
+  `'unsafe-inline'` or a nonce. For the nonce, set
+  `window.litNonce` before loading any component and Lit stamps
+  it onto the element it inserts:
+
+      <script nonce="{{ nonce }}">
+        window.litNonce = '{{ nonce }}';
+      </script>
+
+- **Trusted Types.** The Lit runtime creates a Trusted Types
+  policy named `lit-html`. A page enforcing
+  `require-trusted-types-for 'script'` must allow it with
+  `trusted-types lit-html`, otherwise no component renders.
+- **Module scripts.** Components are plain ES modules, served
+  from the host's own static assets in the vendoring model, so
+  `script-src 'self'` covers them; serving them from another
+  origin means naming that origin.
+
+A policy that covers a page using a vendored copy of sfui:
+
+    default-src 'self';
+    script-src 'self';
+    style-src 'self';
+    img-src 'self' data:;
+
+Add `'nonce-{{ nonce }}'` to `style-src`, and set
+`window.litNonce` to the same value, if the page must support
+browsers without Constructable Stylesheets.

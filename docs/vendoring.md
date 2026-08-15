@@ -46,6 +46,44 @@ the source commit it was vendored from.
   a single file with no npm and no build step, a property to
   preserve.
 
+Each file carries a local provenance header comment naming its
+version, upstream URL and licence, and each is pinned by SHA-256
+in `tools/verify-vendor-deps.sh`. The pinned digest covers the
+committed file -- header and payload -- so it matches nothing
+upstream: what it detects is a vendored bundle drifting from the
+one that was reviewed, not a compromised upstream release. That
+script runs as a pre-commit hook, in CI, and from `vendor.sh`
+before it copies anything into a consumer, which is the last
+point at which the bundles are checked before they are served.
+The consistency checker cross-checks the pinned list against the
+list above, so a third library cannot be vendored and documented
+while silently shipping unpinned.
+
+## Updating a vendored dependency
+
+The pinned digest has to move in lockstep with the file, so a
+bump fails the hook until it does. The sequence:
+
+1. Fetch the new release from its upstream URL, and record the
+   new version and URL in the Vendored dependencies list above.
+2. Re-create the provenance header at the top of the file, in
+   the same shape as the one it replaces, and note how many
+   lines it now occupies.
+3. Confirm the payload is the upstream release untouched:
+   stripping the header must leave a file whose SHA-256 is the
+   upstream digest, which for a six-line header is
+
+       tail -n +7 lit-core.min.js | sha256sum
+
+   Record that upstream digest and the header line count in the
+   comment beside the pin, so the next person can repeat this
+   check rather than trust the pin.
+   `tests/test_verify_vendor_deps.py` asserts that the recorded
+   provenance still re-derives.
+4. Update the pinned digest in `tools/verify-vendor-deps.sh` to
+   the SHA-256 of the whole committed file, then run
+   `pre-commit run --all-files` and `pytest tests/`.
+
 ## Vendoring into a consumer
 
 A consumer keeps a vendored copy of the distributable set (the

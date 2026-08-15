@@ -69,8 +69,8 @@ repos:
         always_run: true
 
       - id: verify-vendor-deps
-        name: Cryptographically verify vendored dependencies
-        description: Verify lit-core and morphdom against expected SHA-256 hashes
+        name: Detect modification of the vendored dependencies
+        description: Hash lit-core and morphdom against the digests pinned in the script
         entry: tools/verify-vendor-deps.sh
         language: script
         pass_filenames: false
