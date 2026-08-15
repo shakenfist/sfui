@@ -77,9 +77,13 @@
                 );
             }
             preference = value;
+            var secure =
+                window.location.protocol === 'https:' ? '; Secure' : '';
             if (value === 'auto') {
                 document.cookie =
-                    COOKIE + '=; Path=/; Max-Age=0; SameSite=Lax';
+                    COOKIE +
+                    '=; Path=/; Max-Age=0; SameSite=Lax' +
+                    secure;
             } else {
                 document.cookie =
                     COOKIE +
@@ -87,7 +91,8 @@
                     value +
                     '; Path=/; Max-Age=' +
                     ONE_YEAR +
-                    '; SameSite=Lax';
+                    '; SameSite=Lax' +
+                    secure;
             }
             stamp();
         },
