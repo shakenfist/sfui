@@ -16,6 +16,7 @@ conftest.require_playwright()
 TABS = '/tests/pages/tabs.html'
 TOGGLE = '/tests/pages/toggle.html'
 DATA_TABLE = '/tests/pages/data-table.html'
+DATA_TABLE_SORTED = '/tests/pages/data-table-sorted.html'
 
 
 def events(page):
@@ -143,6 +144,22 @@ def wait_first_row(page, repo):
     page.wait_for_function(
         'document.querySelector("sf-data-table").shadowRoot'
         f'.querySelector("tbody tr td").textContent.trim() === "{repo}"')
+
+
+def settle(page):
+    """Wait out Lit's async render after a property assignment."""
+    page.evaluate('document.querySelector("sf-data-table").updateComplete')
+
+
+def header_markers(page):
+    """The marker glyph on each header in order, an empty string
+    where a header carries none."""
+    return page.evaluate(
+        """Array.from(document.querySelector('sf-data-table').shadowRoot
+             .querySelectorAll('th')).map(th => {
+               const arrow = th.querySelector('.arrow');
+               return arrow ? arrow.textContent.trim() : '';
+           })""")
 
 
 class TestSfDataTable:
@@ -273,6 +290,42 @@ class TestSfDataTable:
             {'column': 0, 'direction': 'desc'},
             {'column': 0, 'direction': None},
         ]
+
+    def test_sortable_headers_advertise_sorting(self, make_page):
+        """The affordance: a column says it can be sorted before
+        anyone clicks it, and a fixed column stays bare."""
+        page = make_page(DATA_TABLE)
+        assert header_markers(page) == ['⇅', '⇅', '⇅', '⇅', '']
+        hint = page.locator('sf-data-table th .arrow.hint').first
+        assert hint.get_attribute('aria-hidden') == 'true'
+
+    def test_sorting_a_column_replaces_its_hint_with_the_direction(
+            self, make_page):
+        page = make_page(DATA_TABLE)
+        header = page.locator('sf-data-table th', has_text='Repository')
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/conductor')
+        assert header_markers(page) == ['▲', '⇅', '⇅', '⇅', '']
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/sfui')
+        assert header_markers(page)[0] == '▼'
+        header.locator('button').click()
+        page.wait_for_function('window.events.length === 3')
+        assert header_markers(page)[0] == '⇅'
+
+    def test_the_sorted_header_lifts_out_of_the_header_row(self, make_page):
+        """Only color separates "you may sort by this" from "you are
+        sorted by this", so the two states must not render alike."""
+        page = make_page(DATA_TABLE)
+        header = page.locator('sf-data-table th', has_text='Repository')
+        assert header.locator('.arrow').evaluate(
+            'el => getComputedStyle(el).color') == 'rgb(139, 143, 163)'
+        header.locator('button').click()
+        wait_first_row(page, 'shakenfist/conductor')
+        assert header.evaluate(
+            'el => getComputedStyle(el).color') == 'rgb(225, 228, 237)'
+        assert header.locator('.arrow').evaluate(
+            'el => getComputedStyle(el).color') == 'rgb(108, 158, 255)'
 
     def test_sorting_never_mutates_the_rows_property(self, make_page):
         page = make_page(DATA_TABLE)
@@ -437,6 +490,110 @@ class TestSfDataTable:
         page.wait_for_function(
             'document.querySelector("sf-data-table").shadowRoot'
             '.querySelector(".footnote") === null')
+
+
+class TestSfDataTableDeclaredSort:
+    """A page that declares the order its rows arrive in, so the
+    first paint can name it. The component reorders nothing on the
+    strength of a declaration -- it only says what the page said."""
+
+    def test_the_declared_order_is_named_on_first_paint(self, make_page):
+        page = make_page(DATA_TABLE_SORTED)
+        runs = page.locator('sf-data-table th', has_text='Runs')
+        assert runs.get_attribute('aria-sort') == 'descending'
+        assert header_markers(page) == ['⇅', '▼', '']
+        assert first_column(page) == ['sfui', 'kerbside', 'conductor']
+        assert events(page) == []
+
+    def test_the_declared_column_flips_and_comes_back(self, make_page):
+        """Two states, not three: the declared direction is where the
+        column starts, so a click has only the opposite to offer."""
+        page = make_page(DATA_TABLE_SORTED)
+        runs = page.locator('sf-data-table th', has_text='Runs')
+        runs.locator('button').click()
+        wait_first_row(page, 'conductor')
+        assert first_column(page) == ['conductor', 'kerbside', 'sfui']
+        assert runs.get_attribute('aria-sort') == 'ascending'
+        assert header_markers(page) == ['⇅', '▲', '']
+        runs.locator('button').click()
+        wait_first_row(page, 'sfui')
+        assert first_column(page) == ['sfui', 'kerbside', 'conductor']
+        assert runs.get_attribute('aria-sort') == 'descending'
+        assert events(page) == [
+            {'column': 1, 'direction': 'asc'},
+            {'column': 1, 'direction': None},
+        ]
+
+    def test_the_declared_column_restores_the_natural_order(self, make_page):
+        """Sorted by something else, the declared header is the way
+        back: one click, and the table is as the page handed it over."""
+        page = make_page(DATA_TABLE_SORTED)
+        page.locator(
+            'sf-data-table th', has_text='Repository').locator('button').click()
+        wait_first_row(page, 'conductor')
+        assert header_markers(page) == ['▲', '⇅', '']
+        page.locator(
+            'sf-data-table th', has_text='Runs').locator('button').click()
+        wait_first_row(page, 'sfui')
+        assert first_column(page) == ['sfui', 'kerbside', 'conductor']
+        assert header_markers(page) == ['⇅', '▼', '']
+        assert events(page)[-1] == {'column': 1, 'direction': None}
+
+    def test_a_fixed_column_can_declare_the_order(self, make_page):
+        """A table the viewer cannot re-sort can still say what it is
+        sorted by, without the header becoming a button."""
+        page = make_page(DATA_TABLE_SORTED)
+        page.evaluate(
+            """document.querySelector('sf-data-table').columns = [
+                {label: 'Repository'},
+                {label: 'Runs', align: 'num'},
+                {label: 'Region', sorted: 'desc'},
+            ]""")
+        settle(page)
+        region = page.locator('sf-data-table th', has_text='Region')
+        assert region.get_attribute('aria-sort') == 'descending'
+        assert region.locator('button').count() == 0
+        assert header_markers(page) == ['', '', '▼']
+
+    def test_an_ascending_declaration_flips_to_descending(self, make_page):
+        """The mirror of the descending case the harness declares:
+        the direction a declared column offers is the opposite of
+        the declared one, whichever that is."""
+        page = make_page(DATA_TABLE_SORTED)
+        page.evaluate(
+            """const table = document.querySelector('sf-data-table');
+               table.columns = [
+                   {label: 'Repository', sortable: true},
+                   {label: 'Runs', align: 'num', sortable: true,
+                       sorted: 'asc'},
+                   {label: 'Region'},
+               ];
+               table.rows = table.rows.slice().reverse();""")
+        settle(page)
+        runs = page.locator('sf-data-table th', has_text='Runs')
+        assert runs.get_attribute('aria-sort') == 'ascending'
+        assert header_markers(page) == ['⇅', '▲', '']
+        assert first_column(page) == ['conductor', 'kerbside', 'sfui']
+        runs.locator('button').click()
+        wait_first_row(page, 'sfui')
+        assert first_column(page) == ['sfui', 'kerbside', 'conductor']
+        assert runs.get_attribute('aria-sort') == 'descending'
+        assert events(page) == [{'column': 1, 'direction': 'desc'}]
+
+    def test_only_the_first_valid_declaration_counts(self, make_page):
+        page = make_page(DATA_TABLE_SORTED)
+        page.evaluate(
+            """document.querySelector('sf-data-table').columns = [
+                {label: 'Repository', sortable: true, sorted: 'yes'},
+                {label: 'Runs', align: 'num', sortable: true,
+                    sorted: 'desc'},
+                {label: 'Region', sorted: 'desc'},
+            ]""")
+        settle(page)
+        assert header_markers(page) == ['⇅', '▼', '']
+        assert page.locator(
+            'sf-data-table th', has_text='Repository').get_attribute(
+                'aria-sort') == 'none'
 
 
 class TestDemoPage:

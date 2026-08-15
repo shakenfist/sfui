@@ -1,0 +1,41 @@
+<!doctype html>
+<!--
+    Test harness for a table whose page declares the order its
+    rows arrive in. The rows really are in that order (runs
+    descending), because the declaration is a claim the
+    component takes at its word: a harness that lied here would
+    be testing the wrong contract. The third column is
+    deliberately not sortable, so the tests can move the
+    declaration onto a column the viewer cannot click.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>sf-data-table declared sort test page</title>
+    <link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+    <sf-data-table></sf-data-table>
+    <script type="module">
+        import '/components/sf-data-table.js';
+        const table = document.querySelector('sf-data-table');
+        table.columns = [
+            {label: 'Repository', sortable: true},
+            {label: 'Runs', align: 'num', sortable: true,
+                sorted: 'desc'},
+            {label: 'Region'},
+        ];
+        table.rows = [
+            [{text: 'sfui', sortValue: 'sfui'}, 120, 'syd'],
+            [{text: 'kerbside', sortValue: 'kerbside'}, 48, 'syd'],
+            [{text: 'conductor', sortValue: 'conductor'}, 31, 'mel'],
+        ];
+        table.caption = 'Repository runs';
+        window.events = [];
+        table.addEventListener('sf-data-table-sort', (event) => {
+            window.events.push(event.detail);
+        });
+        window.harnessReady = true;
+    </script>
+</body>
+</html>

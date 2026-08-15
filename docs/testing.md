@@ -75,8 +75,12 @@ What is covered:
   descriptor rendering (parts, tones, links, badges, ribbons,
   numeric alignment), the sort cycle back to natural order with
   `aria-sort` and sort events, missing keys sorting last, sort
-  surviving row replacement, and action events with disabled
-  buttons staying silent. Also loads `demo.html` in both themes
+  surviving row replacement, the hint marking a sortable header
+  and the colors separating it from the applied sort, the
+  declared natural order (named on first paint, reordering
+  nothing, its two-state cycle, and on a column the viewer
+  cannot click), and action events with disabled buttons staying
+  silent. Also loads `demo.html` in both themes
   and asserts zero console errors.
 - `tests/test_vendor.py`: `tools/vendor.sh` round-trip into a
   temporary directory, `.sfui-commit` stamping, and `--check`
