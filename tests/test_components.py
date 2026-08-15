@@ -92,6 +92,22 @@ class TestSfTabs:
         assert 'info' in classes
         assert badge.get_attribute('aria-hidden') == 'true'
 
+    def test_escaping_of_tab_id_with_quotes(self, make_page):
+        page = make_page(TABS)
+        page.evaluate("""() => {
+            const tabs = document.querySelector('sf-tabs');
+            tabs.tabs = [
+                {id: 'alpha', label: 'Alpha', badge: null},
+                {id: 'special"id', label: 'Special', badge: null},
+            ];
+            tabs.selected = 'alpha';
+        }""")
+        alpha = page.locator('sf-tabs button', has_text='Alpha')
+        alpha.focus()
+        alpha.press('ArrowRight')
+        page.wait_for_function('window.events.length === 1')
+        assert events(page) == [{'id': 'special"id'}]
+
 
 class TestSfThemeToggle:
     def test_renders_a_radiogroup_with_auto_checked(self, make_page):
