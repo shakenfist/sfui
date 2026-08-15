@@ -31,7 +31,7 @@ repos:
   # Lit and morphdom bundles are excluded from the rewriting hooks
   # so we do not gratuitously modify upstream files.
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         exclude: ^(lit-core\.min\.js|morphdom-umd\.js)$
