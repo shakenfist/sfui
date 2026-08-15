@@ -243,7 +243,10 @@ class SfDataTable extends LitElement {
          * muted double arrow the other sortable headers carry
          * is the same glyph weight, and only color separates
          * "you may sort by this" from "you are sorted by
-         * this".
+         * this". That muting has no rule of its own: the hint
+         * inherits the header row's dim, which is what should
+         * happen if the header row's color ever changes, and
+         * its class exists to give the tests something to name.
          */
         th.sorted {
             color: var(--sf-text, #e1e4ed);
@@ -401,6 +404,10 @@ class SfDataTable extends LitElement {
             return html`<div class="empty">${this.emptyText}</div>`;
         }
         const columns = this.columns || [];
+        // One sort state for the whole header row, resolved once:
+        // every header is describing the same fact from its own
+        // column's point of view.
+        const sort = this._currentSort();
         return html`
             <div class="scroll">
                 <table>
@@ -412,7 +419,7 @@ class SfDataTable extends LitElement {
                     <thead>
                         <tr>
                             ${columns.map((column, index) =>
-                                this._headerCell(column, index),
+                                this._headerCell(column, index, sort),
                             )}
                         </tr>
                     </thead>
@@ -439,8 +446,7 @@ class SfDataTable extends LitElement {
             }`;
     }
 
-    _headerCell(column, index) {
-        const sort = this._currentSort();
+    _headerCell(column, index, sort) {
         const active = sort !== null && sort.column === index;
         const classes = [];
         if (column.align === 'num') {
@@ -632,7 +638,7 @@ class SfDataTable extends LitElement {
     _declaredSort() {
         const columns = this.columns || [];
         for (let index = 0; index < columns.length; index++) {
-            const declared = (columns[index] || {}).sorted;
+            const declared = columns[index].sorted;
             if (declared === 'asc' || declared === 'desc') {
                 return {column: index, direction: declared};
             }

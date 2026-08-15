@@ -465,7 +465,8 @@ tests/test_vendor.py::test_check_detects_drift PASSED
         dataTable.footnote = 'Rows arrive sorted by runs, which '
             + 'the Runs column declares; a muted double arrow '
             + 'marks the other columns you can sort by, and a '
-            + 'third click restores the declared order.';
+            + 'third click on one of those restores the declared '
+            + 'order, as does a single click on Runs.';
         dataTable.caption = 'Repository activity';
         dataTable.addEventListener(
             'sf-data-table-sort',

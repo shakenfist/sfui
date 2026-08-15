@@ -80,8 +80,16 @@ comments saying they must stay in step. `.sf-table--striped` has
 no component counterpart on purpose: the component's tables are
 polled data where the row hover carries the eye, and a consumer
 who wants stripes on one should say so before a variant is
-invented for it. The element is named `sf-data-table` rather
-than `sf-table` because of the naming rule below.
+invented for it. The component's sort markers go the other way
+and are component-only despite needing no JavaScript at all:
+they are a matched pair, a muted double arrow saying a column
+can be sorted and a solid one saying it is the column the table
+is sorted by, and the first half is a promise `.sf-table` cannot
+keep. A solid arrow alone on a static header invites a click
+that does nothing, so a server-rendered page says what it sorted
+by in its caption or footnote instead. The element is named
+`sf-data-table` rather than `sf-table` because of the naming
+rule below.
 
 ## Naming
 

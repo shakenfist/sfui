@@ -555,6 +555,31 @@ class TestSfDataTableDeclaredSort:
         assert region.locator('button').count() == 0
         assert header_markers(page) == ['', '', '▼']
 
+    def test_an_ascending_declaration_flips_to_descending(self, make_page):
+        """The mirror of the descending case the harness declares:
+        the direction a declared column offers is the opposite of
+        the declared one, whichever that is."""
+        page = make_page(DATA_TABLE_SORTED)
+        page.evaluate(
+            """const table = document.querySelector('sf-data-table');
+               table.columns = [
+                   {label: 'Repository', sortable: true},
+                   {label: 'Runs', align: 'num', sortable: true,
+                       sorted: 'asc'},
+                   {label: 'Region'},
+               ];
+               table.rows = table.rows.slice().reverse();""")
+        settle(page)
+        runs = page.locator('sf-data-table th', has_text='Runs')
+        assert runs.get_attribute('aria-sort') == 'ascending'
+        assert header_markers(page) == ['⇅', '▲', '']
+        assert first_column(page) == ['conductor', 'kerbside', 'sfui']
+        runs.locator('button').click()
+        wait_first_row(page, 'sfui')
+        assert first_column(page) == ['sfui', 'kerbside', 'conductor']
+        assert runs.get_attribute('aria-sort') == 'descending'
+        assert events(page) == [{'column': 1, 'direction': 'desc'}]
+
     def test_only_the_first_valid_declaration_counts(self, make_page):
         page = make_page(DATA_TABLE_SORTED)
         page.evaluate(
