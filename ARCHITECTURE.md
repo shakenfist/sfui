@@ -20,12 +20,15 @@ repository-only:
   `--check` drift mode), `run-biome.sh` (fetches the pinned
   Biome binary and lints the JavaScript and CSS),
   `consistency-check.py` (the mechanical design-system rules),
-  and `address-comments-with-claude.sh` (used by the PR
-  automation).
+  `verify-vendor-deps.sh` (hashes the vendored Lit and morphdom
+  bundles against pinned digests, gating both the pre-commit run
+  and `vendor.sh`), and `address-comments-with-claude.sh` (used
+  by the PR automation).
 - `tests/` -- pytest suite: Playwright browser tests for the
   components and theme script, vendor.sh round-trip tests, and
-  tests for the consistency checker. `tests/pages/` holds the
-  browser test harness pages. See `docs/testing.md`.
+  tests for the consistency checker and the dependency pinning.
+  `tests/pages/` holds the browser test harness pages. See
+  `docs/testing.md`.
 - `docs/` -- the specification, testing guide, and plan
   documents under `docs/plans/`.
 - `demo.html` -- the primitive gallery, rendered for review in

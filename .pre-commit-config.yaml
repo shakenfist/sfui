@@ -67,3 +67,11 @@ repos:
         language: script
         pass_filenames: false
         always_run: true
+
+      - id: verify-vendor-deps
+        name: Detect modification of the vendored dependencies
+        description: Hash lit-core and morphdom against the digests pinned in the script
+        entry: tools/verify-vendor-deps.sh
+        language: script
+        pass_filenames: false
+        always_run: true

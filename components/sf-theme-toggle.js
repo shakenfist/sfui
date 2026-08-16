@@ -133,7 +133,7 @@ class SfThemeToggle extends LitElement {
         this._select(next.id);
         this.updateComplete.then(() => {
             const button = this.renderRoot.querySelector(
-                `button[data-id="${next.id}"]`,
+                `button[data-id="${CSS.escape(next.id)}"]`,
             );
             if (button) {
                 button.focus();

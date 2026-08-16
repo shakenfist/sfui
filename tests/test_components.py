@@ -10,7 +10,7 @@ assertions reach the rendered buttons.
 import conftest
 
 
-conftest.require_playwright()
+playwright_api = conftest.require_playwright()
 
 
 TABS = '/tests/pages/tabs.html'
@@ -92,6 +92,45 @@ class TestSfTabs:
         assert 'dot' in classes
         assert 'info' in classes
         assert badge.get_attribute('aria-hidden') == 'true'
+
+    def test_escaping_of_tab_id_with_quotes(self, make_page):
+        """A quote in a tab id must not break the focus selector.
+
+        Selection alone would pass without the escaping: _select()
+        dispatches the event synchronously, while the querySelector
+        that interpolates the id runs later, in the updateComplete
+        callback, where an unescaped quote throws into a promise
+        rather than into the test. So the load-bearing assertions
+        here are that focus arrived and that nothing threw; the
+        wait is only how we get to them without sleeping, which is
+        why its timeout is swallowed.
+        """
+        page = make_page(TABS)
+        errors = []
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.evaluate("""() => {
+            const tabs = document.querySelector('sf-tabs');
+            tabs.tabs = [
+                {id: 'alpha', label: 'Alpha', badge: null},
+                {id: 'special"id', label: 'Special', badge: null},
+            ];
+            tabs.selected = 'alpha';
+        }""")
+        alpha = page.locator('sf-tabs button', has_text='Alpha')
+        alpha.focus()
+        alpha.press('ArrowRight')
+        try:
+            page.wait_for_function(
+                '(id) => document.querySelector("sf-tabs").shadowRoot'
+                '.activeElement?.dataset.id === id',
+                arg='special"id', timeout=5000)
+        except playwright_api.TimeoutError:
+            pass
+        assert errors == []
+        assert events(page) == [{'id': 'special"id'}]
+        focused = page.evaluate(
+            'document.querySelector("sf-tabs").shadowRoot.activeElement.dataset.id')
+        assert focused == 'special"id'
 
 
 class TestSfThemeToggle:
