@@ -132,14 +132,21 @@ defines `--sf-font-sans`, `--sf-font-mono` and the radius scale
 `--sf-radius-sm` / `--sf-radius` / `--sf-radius-lg` (4px / 6px /
 8px, which the components use too), plus four documented knobs:
 
-    --sf-container-max     .sf-container's max width; 1100px by
-                           default, set it to 100% for a
-                           full-bleed page
+    --sf-container-max     .sf-container's max width; 100% by
+                           default, so a page is full bleed
+                           until it asks not to be -- set a
+                           length to cap the measure
     --sf-page-pad          .sf-page's padding; the default drops
                            from 2rem to 1rem under 700px
     --sf-code-max-height   how tall .sf-code grows before it
                            scrolls
     --sf-table-cell-pad    .sf-table's th and td padding
+
+`--sf-container-max` defaults to full bleed because sfui's pages
+are dense operational consoles read on large monitors, where a
+fixed cap spends the extra width on empty margins rather than on
+the tables. A page whose content is prose rather than data caps
+the measure itself.
 
 Per-page tuning is by knob first, unlayered override second. All
 of them are declared on `:root`, so a page overrides one for the
