@@ -15,7 +15,7 @@ jobs:
     # pre-commit installs hook environments (a Go toolchain for
     # actionlint, the Biome binary), which wants a writable ephemeral
     # runner rather than the shared static pool.
-    runs-on: [self-hosted, vm, debian-12, s]
+    runs-on: [self-hosted, vm, debian-13, s]
     timeout-minutes: 15
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-lint
@@ -48,7 +48,7 @@ jobs:
     name: "Unit tests"
     # playwright install-deps needs passwordless sudo for apt, which
     # the vm runners grant and the static pool does not.
-    runs-on: [self-hosted, vm, debian-12, s]
+    runs-on: [self-hosted, vm, debian-13, s]
     timeout-minutes: 20
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-unit
