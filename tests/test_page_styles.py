@@ -51,11 +51,15 @@ class TestSfDialog:
         # Current Chromium inherits custom properties into ::backdrop
         # from the dialog, so making --sf-bg guaranteed-invalid there
         # reproduces what an older engine sees: the fallback, not a
-        # transparent backdrop.
+        # transparent backdrop. Such an engine does not inherit
+        # color-scheme either, so resetting it too gives Canvas the
+        # light scheme's white in both palettes -- the worst case
+        # the sf.css comment describes.
         page = make_page(DIALOG, color_scheme=scheme)
         open_modal(page)
         themed = backdrop_background(page)
         page.evaluate('document.getElementById("dialog").style.setProperty("--sf-bg", "initial")')
+        page.evaluate('document.getElementById("dialog").style.setProperty("color-scheme", "normal")')
         fallback = backdrop_background(page)
         assert fallback != TRANSPARENT
         assert fallback != themed
