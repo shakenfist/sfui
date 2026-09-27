@@ -1,2 +1,6 @@
 __pycache__/
 .pytest_cache/
+
+# weAudit session log: which files a review session opened. Not
+# attestation, and churns every session.
+.vscode/.weauditdaylog

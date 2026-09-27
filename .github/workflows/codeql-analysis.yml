@@ -7,6 +7,11 @@ on:
     branches: [develop]
   pull_request:
     branches: [develop]
+    paths-ignore:
+      - 'REVIEWS.md'
+      - '.vscode/*.weaudit'
+      - '.vscode/*.weaudit-shas.json'
+      - '.vscode/review-scope.toml'
   schedule:
     - cron: '0 17 * * 2'
 
