@@ -454,9 +454,11 @@ tests/test_vendor.py::test_check_detects_drift PASSED
                     </div>
                     <div class="sf-form-actions">
                         <button class="sf-btn sf-btn--lg"
-                                value="cancel">Cancel</button>
+                                type="button"
+                                id="demo-dialog-cancel">Cancel</button>
                         <button class="sf-btn sf-btn--primary sf-btn--lg"
-                                value="save">Save watch</button>
+                                type="submit" value="save"
+                                >Save watch</button>
                     </div>
                 </form>
             </dialog>
@@ -492,6 +494,22 @@ tests/test_vendor.py::test_check_detects_drift PASSED
             'click',
             function () {
                 document.getElementById('demo-dialog').showModal();
+            });
+        document.getElementById('demo-dialog-cancel').addEventListener(
+            'click',
+            function () {
+                document.getElementById('demo-dialog').close();
+            });
+
+        // The gallery's ordinary forms have nowhere to submit to;
+        // without this, Enter in a field reloads the page. The
+        // method="dialog" form is left alone: its submission is
+        // what closes the dialog.
+        document.querySelectorAll('form:not([method="dialog"])')
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                });
             });
 
         var tabStrip = document.getElementById('demo-tabs');

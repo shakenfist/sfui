@@ -31,8 +31,10 @@
                     ).</p>
             </div>
             <div class="sf-form-actions">
-                <button class="sf-btn sf-btn--lg"
-                        value="cancel">Cancel</button>
+                <button class="sf-btn sf-btn--lg" type="button"
+                        id="cancel">Cancel</button>
+                <button class="sf-btn sf-btn--primary sf-btn--lg"
+                        type="submit" value="save">Save</button>
             </div>
         </form>
     </dialog>
@@ -41,6 +43,11 @@
             'click',
             function () {
                 document.getElementById('dialog').showModal();
+            });
+        document.getElementById('cancel').addEventListener(
+            'click',
+            function () {
+                document.getElementById('dialog').close();
             });
         window.harnessReady = true;
     </script>

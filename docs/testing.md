@@ -88,8 +88,10 @@ What is covered:
   behaviour, in both palettes. `.sf-dialog` opened with
   `showModal()` is modal over a backdrop that is sf.css's rather
   than the user agent's, the backdrop stays visible when `--sf-bg`
-  does not resolve in it, and Escape closes it. An
-  `aria-invalid="true"` `.sf-input` takes `--sf-red` as its border.
+  does not resolve in it, Escape closes it, and Enter in a field
+  submits the primary button rather than Cancel. An
+  `aria-invalid="true"` `.sf-input` takes `--sf-red` as its border,
+  and keeps it under keyboard focus.
 - `tests/test_vendor.py`: `tools/vendor.sh` round-trip into a
   temporary directory, `.sfui-commit` stamping, and `--check`
   drift detection for edited, added and deleted files.

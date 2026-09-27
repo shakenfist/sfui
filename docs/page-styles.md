@@ -150,9 +150,17 @@ left is the page's own business. The page:
 - opens the dialog with `showModal()`, never with the `open`
   attribute or `show()`, which give none of the above;
 - names it with `aria-labelledby` pointing at its heading;
-- closes it with a button in a `<form method="dialog">`, which
-  also sets the dialog's `returnValue` to that button's `value`,
-  or by calling `close()`;
+- submits it with the primary button in a `<form
+  method="dialog">`, which closes the dialog and sets its
+  `returnValue` to that button's `value`;
+- makes every other button in that form `type="button"`, and
+  closes the dialog from Cancel with `close()` in its own script.
+  Pressing Enter in a field submits the form through its first
+  submit button in tree order, and a button with no `type` is a
+  submit button; so an untyped Cancel placed before the primary
+  button, where `.sf-form-actions` puts it, would make Enter
+  mean Cancel. Keep the markup in visual order rather than
+  reversing the row, so tab order matches what is on screen;
 - owns everything inside it: reading the fields, submitting them,
   and putting a server's refusal in the right field's
   `.sf-form-error`.
@@ -167,13 +175,18 @@ left is the page's own business. The page:
             <input class="sf-input" id="name">
         </div>
         <div class="sf-form-actions">
-            <button class="sf-btn sf-btn--lg"
-                    value="cancel">Cancel</button>
+            <button class="sf-btn sf-btn--lg" type="button"
+                    id="new-watch-cancel">Cancel</button>
             <button class="sf-btn sf-btn--primary sf-btn--lg"
-                    value="save">Save</button>
+                    type="submit" value="save">Save</button>
         </div>
     </form>
 </dialog>
+<script>
+    document.getElementById('new-watch-cancel').addEventListener(
+        'click',
+        () => document.getElementById('new-watch').close());
+</script>
 ```
 
 A page that repaints its content from a template (morphdom, or

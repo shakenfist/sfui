@@ -76,6 +76,32 @@ class TestSfDialog:
         page.keyboard.press('Escape')
         page.wait_for_function('document.getElementById("dialog").open === false')
 
+    def test_enter_in_a_field_submits_the_primary_button(self, make_page, scheme):
+        # Implicit submission uses the form's first submit button in
+        # tree order. Cancel comes first in .sf-form-actions, so it
+        # must be type="button" or Enter would mean Cancel.
+        page = make_page(DIALOG, color_scheme=scheme)
+        open_modal(page)
+        page.locator('#regexp').fill('^nova/')
+        page.locator('#regexp').press('Enter')
+        page.wait_for_function('document.getElementById("dialog").open === false')
+        return_value = page.evaluate('document.getElementById("dialog").returnValue')
+        assert return_value == 'save', f'Enter closed the dialog with returnValue {return_value!r}, not the primary button'
+
+    def test_invalid_field_keeps_red_under_keyboard_focus(self, make_page, scheme):
+        # Opened from the keyboard, showModal() focuses the invalid
+        # field, which then matches :focus-visible. The invalid rule
+        # follows the focus rule in sf.css, so the border stays red.
+        page = make_page(DIALOG, color_scheme=scheme)
+        page.locator('#opener').focus()
+        page.keyboard.press('Enter')
+        page.wait_for_function('document.getElementById("dialog").open === true')
+        assert page.evaluate('document.activeElement.id') == 'regexp'
+        assert page.evaluate('document.getElementById("regexp").matches(":focus-visible")')
+        red = page.evaluate('getComputedStyle(document.getElementById("red-probe")).color')
+        border = page.evaluate('getComputedStyle(document.getElementById("regexp")).borderTopColor')
+        assert border == red, f'focused invalid field border is {border}, not --sf-red {red}'
+
     def test_invalid_field_border_is_the_red_token(self, make_page, scheme):
         page = make_page(DIALOG, color_scheme=scheme)
         open_modal(page)
