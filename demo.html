@@ -358,6 +358,112 @@ tests/test_vendor.py::test_check_detects_drift PASSED
 
         <section class="sf-section">
             <div class="sf-section-header">
+                <h2>Edit a watch</h2>
+            </div>
+            <form>
+                <div class="sf-field">
+                    <label class="sf-label" for="watch-name">Name
+                        </label>
+                    <input class="sf-input" id="watch-name"
+                           type="text" value="nova live migration">
+                </div>
+                <div class="sf-field">
+                    <label class="sf-label" for="watch-query">Query
+                        </label>
+                    <input class="sf-input sf-input--mono"
+                           id="watch-query" type="text"
+                           aria-describedby="watch-query-hint"
+                           value="project:openstack/nova status:open">
+                    <p class="sf-hint" id="watch-query-hint">Gerrit
+                        search syntax. Your own changes are left
+                        out, and age: and before: are refused.</p>
+                </div>
+                <div class="sf-field">
+                    <label class="sf-label" for="watch-regexp">File
+                        regexp</label>
+                    <input class="sf-input sf-input--mono"
+                           id="watch-regexp" type="text"
+                           aria-invalid="true"
+                           aria-describedby="watch-regexp-error"
+                           value="^nova/compute/(manager">
+                    <p class="sf-form-error" id="watch-regexp-error"
+                        >Missing ) at position 21.</p>
+                </div>
+                <div class="sf-field">
+                    <label class="sf-label" for="watch-scope">Scope
+                        </label>
+                    <select class="sf-input" id="watch-scope">
+                        <option>Every revision</option>
+                        <option>Latest revision only</option>
+                    </select>
+                </div>
+                <div class="sf-field">
+                    <label class="sf-label" for="watch-notes">Notes
+                        </label>
+                    <textarea class="sf-input" id="watch-notes"
+                              rows="3"
+                        >Anything touching the live migration path needs a second look from compute.</textarea>
+                </div>
+                <div class="sf-field">
+                    <label class="sf-check"><input type="checkbox"
+                        checked> Enabled</label>
+                </div>
+                <div class="sf-form-actions">
+                    <button class="sf-btn sf-btn--lg"
+                            type="button">Cancel</button>
+                    <button class="sf-btn sf-btn--primary sf-btn--lg"
+                            type="submit">Save watch</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
+                <h2>Dialogs</h2>
+                <button class="sf-btn sf-push-right" type="button"
+                        id="open-demo-dialog">Open modal</button>
+            </div>
+            <!-- Shown with the open attribute so it appears in a
+                 screenshot. The user agent positions a non-modal
+                 open dialog absolutely, on top of whatever follows
+                 it; position: static puts this one in flow. A real
+                 page opens a dialog with showModal(), as the
+                 button above does for the second one. -->
+            <dialog class="sf-dialog" open style="position: static"
+                    aria-labelledby="static-dialog-title">
+                <h2 id="static-dialog-title">Delete watch</h2>
+                <p>Stop watching <strong>nova live
+                    migration</strong>? Changes already acknowledged
+                    under it stay acknowledged.</p>
+                <div class="sf-form-actions">
+                    <button class="sf-btn sf-btn--lg"
+                            type="button">Cancel</button>
+                    <button class="sf-btn sf-btn--danger sf-btn--lg"
+                            type="button">Delete</button>
+                </div>
+            </dialog>
+            <dialog class="sf-dialog" id="demo-dialog"
+                    aria-labelledby="demo-dialog-title">
+                <h2 id="demo-dialog-title">New watch</h2>
+                <form method="dialog">
+                    <div class="sf-field">
+                        <label class="sf-label"
+                               for="demo-dialog-name">Name</label>
+                        <input class="sf-input"
+                               id="demo-dialog-name" type="text">
+                    </div>
+                    <div class="sf-form-actions">
+                        <button class="sf-btn sf-btn--lg"
+                                value="cancel">Cancel</button>
+                        <button class="sf-btn sf-btn--primary sf-btn--lg"
+                                value="save">Save watch</button>
+                    </div>
+                </form>
+            </dialog>
+        </section>
+
+        <section class="sf-section">
+            <div class="sf-section-header">
                 <h2>About this page</h2>
             </div>
             <p>This gallery is generated by hand against
@@ -380,6 +486,12 @@ tests/test_vendor.py::test_check_detects_drift PASSED
             'sf-theme-changed',
             function (event) {
                 window.sfTheme.set(event.detail.preference);
+            });
+
+        document.getElementById('open-demo-dialog').addEventListener(
+            'click',
+            function () {
+                document.getElementById('demo-dialog').showModal();
             });
 
         var tabStrip = document.getElementById('demo-tabs');

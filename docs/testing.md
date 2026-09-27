@@ -84,6 +84,12 @@ What is covered:
   cannot click), and action events with disabled buttons staying
   silent. Also loads `demo.html` in both themes
   and asserts zero console errors.
+- `tests/test_page_styles.py`: the `sf.css` primitives that have
+  behaviour, in both palettes. `.sf-dialog` opened with
+  `showModal()` is modal over a backdrop that is sf.css's rather
+  than the user agent's, the backdrop stays visible when `--sf-bg`
+  does not resolve in it, and Escape closes it. An
+  `aria-invalid="true"` `.sf-input` takes `--sf-red` as its border.
 - `tests/test_vendor.py`: `tools/vendor.sh` round-trip into a
   temporary directory, `.sfui-commit` stamping, and `--check`
   drift detection for edited, added and deleted files.
