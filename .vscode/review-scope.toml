@@ -1,0 +1,47 @@
+# Which files are subject to whole-file review (see
+# shakenfist/development docs/code-review-tracking.md). Patterns are
+# fnmatch-style against repo-relative paths; '*' matches across
+# directory separators. An empty include list would mean all tracked
+# files.
+#
+# sfui has no build step: the JavaScript, CSS and HTML here are what
+# consumers vendor verbatim through tools/vendor.sh and serve to
+# browsers, so the source is the shipped artifact and all of it is in
+# scope. The SVG logo is included for the same reason -- an SVG can
+# carry script, and it is served alongside the rest. The Python is
+# the consistency checker and the test suite, the shell scripts fetch
+# and verify pinned binaries and vendored dependencies, and the YAML
+# and JSON decide what CI runs and how Biome and Renovate behave. The
+# Markdown is the documentation consumers read before adopting a
+# component.
+include = [
+    '*.js',
+    '*.css',
+    '*.html',
+    '*.svg',
+    '*.py',
+    '*.sh',
+    '*.md',
+    '*.yml',
+    '*.yaml',
+    '*.json',
+]
+
+# Named here rather than merely left out of include above, so that
+# each one is a recorded decision that something should not be
+# reviewed rather than a silence nobody chose.
+exclude = [
+    # Vendored upstream bundles. Their integrity is checked
+    # mechanically against pinned digests by
+    # tools/verify-vendor-deps.sh, which is in scope; a human reading
+    # minified third-party code would attest to nothing useful.
+    'lit-core.min.js',
+    'morphdom-umd.js',
+    # A point-in-time archive of intended work, not living artifacts.
+    'docs/plans/*',
+    # Rewritten daily by the export-repo-config workflow from the
+    # GitHub API; a snapshot of settings, not something a human wrote.
+    '.github/exported-config/*',
+    '.gitignore',           # tool configuration, no behaviour of its own
+    'LICENSE',              # verbatim licence text
+]

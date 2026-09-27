@@ -29,14 +29,16 @@ repos:
 
   # Trailing whitespace, end-of-file, basic hygiene. The vendored
   # Lit and morphdom bundles are excluded from the rewriting hooks
-  # so we do not gratuitously modify upstream files.
+  # so we do not gratuitously modify upstream files. The weAudit
+  # review marks are excluded because their generator emits no
+  # trailing newline, so fixing it would only be undone next regen.
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^(lit-core\.min\.js|morphdom-umd\.js)$
+        exclude: ^(lit-core\.min\.js|morphdom-umd\.js|\.vscode/.*\.weaudit.*)$
       - id: end-of-file-fixer
-        exclude: ^(lit-core\.min\.js|morphdom-umd\.js)$
+        exclude: ^(lit-core\.min\.js|morphdom-umd\.js|\.vscode/.*\.weaudit.*)$
       - id: check-yaml
       - id: check-merge-conflict
       - id: check-added-large-files
