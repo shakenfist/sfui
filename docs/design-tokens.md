@@ -13,7 +13,11 @@ Rules:
   a component may repeat a token's dark default as a `var()`
   fallback (`var(--sf-red, #f87171)`) so it degrades sanely on a
   page that forgot the stylesheet. Fallbacks must match the
-  `:root` (dark) values in `tokens.css` exactly.
+  `:root` (dark) values in `tokens.css` exactly. The one other
+  exception is `sf.css`'s dialog backdrop, which falls back to
+  the `Canvas` system color because older engines give
+  `::backdrop` no tokens at all (see
+  [page-styles.md](page-styles.md#dialogs)).
 - A page needing a translucent tint of a token (badge and banner
   fills) derives it with `color-mix(in srgb, var(--sf-*) N%,
   transparent)`, never by restating the color as an `rgba()`

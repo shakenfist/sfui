@@ -5,7 +5,8 @@ Shaken Fist page is built from -- chrome (`.sf-page`,
 `.sf-container`, `.sf-header`, `.sf-nav`, `.sf-footer`,
 `.sf-status-line`), content (`.sf-section`, `.sf-card`,
 `.sf-table`, `.sf-btn`, `.sf-badge`, `.sf-code`, `.sf-banner`,
-`.sf-empty`, `.sf-footnote`), disclosures and form controls. It
+`.sf-empty`, `.sf-footnote`), disclosures, form controls and
+dialogs. It
 exists so two projects do not write a table style twice and
 then drift. It is not a framework: no grid system, no utility
 vocabulary, no JavaScript, and no opinion about layout beyond a
@@ -90,6 +91,116 @@ that does nothing, so a server-rendered page says what it sorted
 by in its caption or footnote instead. The element is named
 `sf-data-table` rather than `sf-table` because of the naming
 rule below.
+
+## Forms
+
+A field is a `.sf-field` holding a `.sf-label`, a control, and
+optionally a `.sf-hint` and a `.sf-form-error` beneath it, in
+that order. The label takes the small dim uppercase treatment of
+a table header, so a form and a table read as one design.
+
+- `.sf-input` styles `<input>`, `<textarea>` and `<select>`
+  alike. On a textarea it resizes vertically only, so it can
+  never widen its form. It sets its own `box-sizing`, so it fits
+  its column on a page that has not opted in to `.sf-page`.
+- `.sf-input--mono` sets the mono font stack, for queries,
+  regular expressions and ids.
+- An invalid field is marked with `aria-invalid="true"`, which
+  turns its border `--sf-red`. There is no modifier class: the
+  ARIA state is the style hook, so what a screen reader announces
+  and what the eye sees cannot disagree. Say why in a
+  `.sf-form-error`, and point the input's `aria-describedby` at
+  it.
+- `.sf-hint` is guidance under a field: small, dim, and in
+  sentence case rather than the label's capitals, because it is
+  read rather than scanned. Point `aria-describedby` at it too.
+- `.sf-check` is a `<label>` wrapping a checkbox and its text,
+  so the text is part of the hit area. The box takes
+  `--sf-accent`.
+- `.sf-form-actions` is the row of buttons that ends a form,
+  right-aligned so the primary control sits where the eye
+  finishes, and wrapping on a narrow screen. Its buttons are
+  `.sf-btn--lg`, to match the fields.
+
+```html
+<div class="sf-field">
+    <label class="sf-label" for="query">Query</label>
+    <input class="sf-input sf-input--mono" id="query"
+           aria-invalid="true"
+           aria-describedby="query-hint query-error">
+    <p class="sf-hint" id="query-hint">Gerrit search syntax.</p>
+    <p class="sf-form-error" id="query-error">age: is refused.</p>
+</div>
+```
+
+## Dialogs
+
+`.sf-dialog` styles a native `<dialog>` as a `.sf-card`: the same
+surface, border and radius. Its width is capped at
+`min(40rem, 100% - 2rem)`, which leaves backdrop showing either
+side on a phone, and an `h2` inside it is its title. The backdrop
+washes the page toward `--sf-bg`, so it recedes in both palettes.
+
+It is a class, not a component, because the platform element
+already does what a component would have to build: `showModal()`
+makes the rest of the page inert and puts the dialog in the top
+layer, Escape closes it, and focus returns to the opener. What is
+left is the page's own business. The page:
+
+- opens the dialog with `showModal()`, never with the `open`
+  attribute or `show()`, which give none of the above;
+- names it with `aria-labelledby` pointing at its heading;
+- submits it with the primary button in a `<form
+  method="dialog">`, which closes the dialog and sets its
+  `returnValue` to that button's `value`;
+- makes every other button in that form `type="button"`, and
+  closes the dialog from Cancel with `close()` in its own script.
+  Pressing Enter in a field submits the form through its first
+  submit button in tree order, and a button with no `type` is a
+  submit button; so an untyped Cancel placed before the primary
+  button, where `.sf-form-actions` puts it, would make Enter
+  mean Cancel. Keep the markup in visual order rather than
+  reversing the row, so tab order matches what is on screen;
+- owns everything inside it: reading the fields, submitting them,
+  and putting a server's refusal in the right field's
+  `.sf-form-error`.
+
+```html
+<dialog class="sf-dialog" id="new-watch"
+        aria-labelledby="new-watch-title">
+    <h2 id="new-watch-title">New watch</h2>
+    <form method="dialog">
+        <div class="sf-field">
+            <label class="sf-label" for="name">Name</label>
+            <input class="sf-input" id="name">
+        </div>
+        <div class="sf-form-actions">
+            <button class="sf-btn sf-btn--lg" type="button"
+                    id="new-watch-cancel">Cancel</button>
+            <button class="sf-btn sf-btn--primary sf-btn--lg"
+                    type="submit" value="save">Save</button>
+        </div>
+    </form>
+</dialog>
+<script>
+    document.getElementById('new-watch-cancel').addEventListener(
+        'click',
+        () => document.getElementById('new-watch').close());
+</script>
+```
+
+A page that repaints its content from a template (morphdom, or
+`innerHTML`) must keep the dialog out of the repainted region:
+a repaint copies the rendered value over whatever the operator
+has typed.
+
+The backdrop's `var(--sf-bg)` has a fallback, `Canvas`, the
+system color for a page background. Engines before Chromium 122
+do not inherit custom properties into `::backdrop`, so there the
+token does not resolve, and without the fallback the backdrop
+would be transparent. It is the one `var()` fallback in
+`sf.css`, and it is a system color rather than a hex value, so
+the no-literal rule still holds.
 
 ## Naming
 

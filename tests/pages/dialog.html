@@ -1,0 +1,55 @@
+<!doctype html>
+<!--
+    Test harness for the sf.css form and dialog primitives: an
+    opted-in page carrying a .sf-dialog that the tests open with
+    showModal(), the way docs/page-styles.md tells a page to, and
+    an invalid .sf-input. The #red-probe element resolves --sf-red
+    to a computed color, so the tests can compare it with a border
+    color rather than parse the token's hex.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>sf-dialog test page</title>
+    <script src="/sf-theme.js"></script>
+    <link rel="stylesheet" href="/tokens.css">
+    <link rel="stylesheet" href="/sf.css">
+</head>
+<body class="sf-page">
+    <button class="sf-btn" type="button" id="opener">Open</button>
+    <span id="red-probe" style="color: var(--sf-red)">probe</span>
+    <dialog class="sf-dialog" id="dialog"
+            aria-labelledby="dialog-title">
+        <h2 id="dialog-title">New watch</h2>
+        <form method="dialog">
+            <div class="sf-field">
+                <label class="sf-label" for="regexp">Regexp</label>
+                <input class="sf-input sf-input--mono" id="regexp"
+                       type="text" aria-invalid="true"
+                       aria-describedby="regexp-error">
+                <p class="sf-form-error" id="regexp-error">Missing
+                    ).</p>
+            </div>
+            <div class="sf-form-actions">
+                <button class="sf-btn sf-btn--lg" type="button"
+                        id="cancel">Cancel</button>
+                <button class="sf-btn sf-btn--primary sf-btn--lg"
+                        type="submit" value="save">Save</button>
+            </div>
+        </form>
+    </dialog>
+    <script>
+        document.getElementById('opener').addEventListener(
+            'click',
+            function () {
+                document.getElementById('dialog').showModal();
+            });
+        document.getElementById('cancel').addEventListener(
+            'click',
+            function () {
+                document.getElementById('dialog').close();
+            });
+        window.harnessReady = true;
+    </script>
+</body>
+</html>

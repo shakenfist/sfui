@@ -18,8 +18,9 @@ those says so and names who checks it instead.
 - No hex colors outside `tokens.css`, except `var()` fallbacks
   whose values match `tokens.css` exactly:
   `grep -rn '#[0-9a-f]\{6\}' components/ sf.css` and compare.
-  `sf.css` carries no fallbacks, so its share of that grep is
-  zero matches.
+  `sf.css` carries one fallback, the `Canvas` system color on
+  the dialog backdrop (see [page-styles.md](page-styles.md)), and
+  no hex at all, so its share of that grep is zero matches.
 - No `var(--` references to tokens that `tokens.css` or `sf.css`
   does not define (a typo'd token silently falls back).
 - Every custom element and every dispatched event name starts with
