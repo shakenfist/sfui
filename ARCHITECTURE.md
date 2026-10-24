@@ -45,9 +45,8 @@ consumer needs no JavaScript toolchain and no network dependency
 at build or run time. `.sfui-commit` in each vendored copy
 records provenance, and the `sfui-vendor` consistency audit (in
 shakenfist/development) catches vendored copies that were edited
-in place or have fallen behind. The first consumer is
-private-ci's conductor dashboard; kerbside's admin UI is
-converting page by page.
+in place or have fallen behind. There are two consumers:
+private-ci's conductor dashboard, and kerbside's admin UI.
 
 ## Continuous integration
 
