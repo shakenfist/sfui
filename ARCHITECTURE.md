@@ -22,8 +22,7 @@ repository-only:
   `consistency-check.py` (the mechanical design-system rules),
   `verify-vendor-deps.sh` (hashes the vendored Lit and morphdom
   bundles against pinned digests, gating both the pre-commit run
-  and `vendor.sh`), and `address-comments-with-claude.sh` (used
-  by the PR automation).
+  and `vendor.sh`).
 - `tests/` -- pytest suite: Playwright browser tests for the
   components and theme script, vendor.sh round-trip tests, and
   tests for the consistency checker and the dependency pinning.
@@ -63,9 +62,9 @@ shakenfist/development workflow standards:
   and pushes to `develop`.
 - `codeql-analysis.yml` -- GitHub CodeQL over the JavaScript,
   with the vendored Lit and morphdom bundles excluded.
-- `pr-re-review.yml`, `pr-address-comments.yml`,
-  `pr-retest.yml` -- the `@shakenfist-bot` developer
-  automations, from the shared templates.
+- `pr-re-review.yml` and `pr-retest.yml` -- the
+  `@shakenfist-bot` developer automations, copied verbatim from
+  the shared templates.
 - `renovate.yml` / `export-repo-config.yml` -- dependency bumps
   (GitHub Actions and pre-commit hooks; Biome is pinned by hand
   in `tools/run-biome.sh`) and the daily repository
