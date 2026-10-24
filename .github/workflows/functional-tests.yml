@@ -97,6 +97,10 @@ jobs:
           . /tmp/venv-test/bin/activate
           pytest tests/ -v
 
+  # No event or bot-commit guard here: pr-auto-review.yml runs only for
+  # same-repository pull_request events (so a retest's workflow_dispatch
+  # skips it) and skips a PR whose last commit is the bot's. It needs
+  # only the two scopes below; the reviewer files no issues.
   automated_reviewer:
     name: "Automated reviewer"
     needs: [sanity_checks, unit_tests]
