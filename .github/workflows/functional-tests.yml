@@ -8,11 +8,25 @@ on:
   pull_request:
     branches:
       - develop
-    paths-ignore:
-      - 'REVIEWS.md'
-      - '.vscode/*.weaudit'
-      - '.vscode/*.weaudit-shas.json'
-      - '.vscode/review-scope.toml'
+    # Both lanes run on ephemeral VMs, so a pull request touching only
+    # docs/ or the review-tracking state skips them. This is an ordered
+    # paths: list rather than paths-ignore because one docs file is
+    # exercised: tools/consistency-check.py cross-checks the Layout and
+    # Vendored dependencies lists in docs/vendoring.md against
+    # tools/vendor.sh and the tree, so that file is put back after
+    # docs/** is excluded. A later pattern overrides an earlier one.
+    # Trigger-level filtering is only safe while no ruleset makes these
+    # jobs required checks: a required check that never reports blocks
+    # the merge forever. Switch to a dorny/paths-filter job if that
+    # changes.
+    paths:
+      - '**'
+      - '!docs/**'
+      - 'docs/vendoring.md'
+      - '!REVIEWS.md'
+      - '!.vscode/*.weaudit'
+      - '!.vscode/*.weaudit-shas.json'
+      - '!.vscode/review-scope.toml'
 
 jobs:
   sanity_checks:

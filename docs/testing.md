@@ -61,6 +61,14 @@ the run outright: CI installs it explicitly, so its absence there
 means the install step degraded, and skipping would report a
 green run that exercised no browser contracts.
 
+CI does not run for a pull request that touches only `docs/` or
+the review-tracking files (`REVIEWS.md` and the `.vscode` review
+marks), so such a pull request gets neither the lint and test
+lanes nor the automated review. `docs/vendoring.md` is the
+exception: the consistency checker reads it, so a change to it
+runs CI as usual. Run `pre-commit run --all-files` locally before
+pushing a documentation-only change.
+
 What is covered:
 
 - `tests/test_theme.py`: the `sf-theme.js` contract -- the auto
