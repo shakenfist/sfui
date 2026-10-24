@@ -15,6 +15,8 @@ on:
     # Vendored dependencies lists in docs/vendoring.md against
     # tools/vendor.sh and the tree, so that file is put back after
     # docs/** is excluded. A later pattern overrides an earlier one.
+    # The scope config is not excluded: it decides what is reviewed at
+    # all, so a change to it is tested like code.
     # Trigger-level filtering is only safe while no ruleset makes these
     # jobs required checks: a required check that never reports blocks
     # the merge forever. Switch to a dorny/paths-filter job if that
@@ -26,7 +28,6 @@ on:
       - '!REVIEWS.md'
       - '!.vscode/*.weaudit'
       - '!.vscode/*.weaudit-shas.json'
-      - '!.vscode/review-scope.toml'
 
 jobs:
   sanity_checks:
