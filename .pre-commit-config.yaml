@@ -27,6 +27,17 @@ repos:
         types_or: [sh, bash, shell]
         args: ['-x']
 
+  # skillsaw lints the agent context -- AGENTS.md, and any skills under
+  # .claude/skills/ -- for malformed frontmatter, embedded credentials
+  # and invisible-unicode smuggling. Agent context is text an agent
+  # acts on, and the credential scan is not pointed at it. CI runs it
+  # too, through the pre-commit run in functional-tests.yml, because a
+  # hook alone can be skipped with --no-verify.
+  - repo: https://github.com/stbenjam/skillsaw
+    rev: v0.22.0
+    hooks:
+      - id: skillsaw
+
   # Trailing whitespace, end-of-file, basic hygiene. The vendored
   # Lit and morphdom bundles are excluded from the rewriting hooks
   # so we do not gratuitously modify upstream files. The weAudit

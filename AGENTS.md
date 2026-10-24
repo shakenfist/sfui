@@ -63,6 +63,9 @@ Things that trip up assistants:
   proposing a commit; `docs/testing.md` covers the setup. CI
   (`.github/workflows/functional-tests.yml`) runs the same
   checks, and the automated reviewer only runs after they pass.
+- Before pushing a branch, run the pre-push audit in
+  `PUSH-AUDIT.md`: the mechanical checks first, then the judgment
+  review of the diff.
 
 The spin-out history and consumer conversion steps are in
 `docs/plans/PLAN-sfui-spinout.md`; the compliance and testing
