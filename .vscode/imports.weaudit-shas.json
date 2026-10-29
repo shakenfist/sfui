@@ -34,17 +34,6 @@
         "verified": true
       }
     },
-    "renovate.json": {
-      "sha": "0155b2e100a310454fe89e015823b3372be4777a",
-      "date": "2026-10-18",
-      "imported": {
-        "repo": "shakenfist/development",
-        "reviewer": "mikal",
-        "path": "templates/renovate/renovate.json",
-        "commit": "7375b71847974f0aa943b2d4745d6fcbf9174ca4",
-        "verified": true
-      }
-    },
     "tools/ci-prune-reviews.sh": {
       "sha": "b4ce5b64c79afb01e07b98f43457fa5ff842e896",
       "date": "2026-10-16",
