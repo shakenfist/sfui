@@ -34,6 +34,17 @@
         "verified": true
       }
     },
+    ".github/workflows/renovate.yml": {
+      "sha": "7480d088733b509c81a99bc0b3a05797a8665091",
+      "date": "2026-11-02",
+      "imported": {
+        "repo": "shakenfist/development",
+        "reviewer": "mikal",
+        "path": ".github/workflows/renovate.yml",
+        "commit": "7925d02bb343bb8a946730ff00718228225ae22f",
+        "verified": true
+      }
+    },
     "renovate.json": {
       "sha": "c91385eb8cc7717ff9f3c5dbebad3de2ee8b70b2",
       "date": "2026-10-31",
