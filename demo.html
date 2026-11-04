@@ -67,6 +67,23 @@
                 <a href="#">Consoles</a>
                 <a href="#">Sessions</a>
             </nav>
+            <p class="sf-footnote">A strip wider than its container
+                scrolls within itself rather than pushing the page
+                sideways. Narrow this window, or view it on a phone,
+                to see the overflow: the selected tab is scrolled
+                into view, and the plain-anchor strip below behaves
+                the same way.</p>
+            <sf-tabs id="demo-tabs-overflow"></sf-tabs>
+            <nav class="sf-nav" aria-label="Regions">
+                <a href="#">Sydney</a>
+                <a href="#">Melbourne</a>
+                <a href="#">Brisbane</a>
+                <a href="#">Perth</a>
+                <a href="#">Adelaide</a>
+                <a href="#">Canberra</a>
+                <a href="#" aria-current="page">Hobart</a>
+                <a href="#">Darwin</a>
+            </nav>
         </section>
 
         <section class="sf-section">
@@ -530,6 +547,25 @@ tests/test_vendor.py::test_check_detects_drift PASSED
             function (event) {
                 selectedTabLabel.textContent = event.detail.id;
             });
+
+        // Enough tabs to overflow a phone-width viewport, so the
+        // strip's own horizontal scrolling is visible in the demo.
+        var overflowTabs = document.getElementById(
+            'demo-tabs-overflow');
+        overflowTabs.tabs = [
+            {id: 'overview', label: 'Overview', badge: null},
+            {id: 'sources', label: 'Sources', badge: null},
+            {id: 'consoles', label: 'Consoles', badge: null},
+            {id: 'sessions', label: 'Sessions',
+             badge: {count: 2, severity: 'info'}},
+            {id: 'workers', label: 'Workers', badge: null},
+            {id: 'queue', label: 'Queue',
+             badge: {count: 1, severity: 'attention'}},
+            {id: 'watches', label: 'Watches', badge: null},
+            {id: 'stray', label: 'Stray',
+             badge: {severity: 'urgent'}}
+        ];
+        overflowTabs.selected = 'overview';
 
         var dataTable = document.getElementById(
             'demo-data-table');

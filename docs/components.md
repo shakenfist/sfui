@@ -68,8 +68,12 @@ one of them follows these rules:
   and the CSS-only `.sf-table` (see page-styles.md) serves
   server-rendered pages. See the file header in
   `components/sf-data-table.js` for the contract.
-- `sf-tabs`: tab strip with notification badges. See the file
-  header in `components/sf-tabs.js` for the contract.
+- `sf-tabs`: tab strip with notification badges. More tabs than
+  fit the viewport scroll within the strip rather than widening
+  the page, and the selected tab is scrolled into view, so a
+  consumer need not handle overflow itself. The CSS-only `.sf-nav`
+  link strip (see page-styles.md) scrolls the same way. See the
+  file header in `components/sf-tabs.js` for the contract.
 - `sf-theme-toggle`: three-state (auto/light/dark) theme
   preference control, wired by the host page to `sf-theme.js`.
   See the file header in `components/sf-theme-toggle.js` for the

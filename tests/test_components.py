@@ -14,6 +14,7 @@ playwright_api = conftest.require_playwright()
 
 
 TABS = '/tests/pages/tabs.html'
+TABS_OVERFLOW = '/tests/pages/tabs-overflow.html'
 TOGGLE = '/tests/pages/toggle.html'
 DATA_TABLE = '/tests/pages/data-table.html'
 DATA_TABLE_SORTED = '/tests/pages/data-table-sorted.html'
@@ -131,6 +132,52 @@ class TestSfTabs:
         focused = page.evaluate(
             'document.querySelector("sf-tabs").shadowRoot.activeElement.dataset.id')
         assert focused == 'special"id'
+
+
+class TestSfTabsOverflow:
+    """A strip of more tabs than fit a phone-width viewport. The
+    contract: the strip scrolls within itself rather than widening
+    the page, and the selected tab is brought into view."""
+
+    PHONE = {'width': 390, 'height': 800}
+
+    def _settle(self, page):
+        page.evaluate('document.querySelector("sf-tabs").updateComplete')
+
+    def test_a_wide_strip_does_not_scroll_the_page_sideways(self, make_page):
+        page = make_page(TABS_OVERFLOW)
+        page.set_viewport_size(self.PHONE)
+        self._settle(page)
+        metrics = page.evaluate(
+            '() => ({scroll: document.documentElement.scrollWidth,'
+            ' client: document.documentElement.clientWidth})')
+        assert metrics['scroll'] <= metrics['client']
+
+    def test_the_strip_is_what_scrolls(self, make_page):
+        page = make_page(TABS_OVERFLOW)
+        page.set_viewport_size(self.PHONE)
+        self._settle(page)
+        nav = page.locator('sf-tabs nav')
+        assert nav.evaluate('el => getComputedStyle(el).overflowX') == 'auto'
+        assert nav.evaluate('el => el.scrollWidth > el.clientWidth')
+
+    def test_selecting_an_offscreen_tab_scrolls_it_into_view(self, make_page):
+        page = make_page(TABS_OVERFLOW)
+        page.set_viewport_size(self.PHONE)
+        self._settle(page)
+        page.evaluate('document.querySelector("sf-tabs").selected = "stray"')
+        self._settle(page)
+        within = page.evaluate("""() => {
+            const tabs = document.querySelector('sf-tabs');
+            const nav = tabs.shadowRoot.querySelector('nav');
+            const button = tabs.shadowRoot.querySelector(
+                'button[aria-selected="true"]');
+            const navBox = nav.getBoundingClientRect();
+            const btnBox = button.getBoundingClientRect();
+            return btnBox.left >= navBox.left - 1 &&
+                   btnBox.right <= navBox.right + 1;
+        }""")
+        assert within
 
 
 class TestSfThemeToggle:

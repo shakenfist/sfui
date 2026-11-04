@@ -1,0 +1,39 @@
+<!doctype html>
+<!--
+    Test harness for sf-tabs overflow. Enough tabs to exceed a
+    phone-width viewport, so the tests can assert the strip scrolls
+    within itself rather than widening the page, and that selecting
+    an off-screen tab scrolls it into view. The page plays the same
+    host-page role as tabs.html, handing data in through properties
+    and recording the events the strip reports.
+-->
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>sf-tabs overflow test page</title>
+    <link rel="stylesheet" href="/tokens.css">
+</head>
+<body>
+    <sf-tabs></sf-tabs>
+    <script type="module">
+        import '/components/sf-tabs.js';
+        const tabs = document.querySelector('sf-tabs');
+        tabs.tabs = [
+            {id: 'overview', label: 'Overview', badge: null},
+            {id: 'sources', label: 'Sources', badge: null},
+            {id: 'consoles', label: 'Consoles', badge: null},
+            {id: 'sessions', label: 'Sessions', badge: null},
+            {id: 'workers', label: 'Workers', badge: null},
+            {id: 'queue', label: 'Queue', badge: null},
+            {id: 'watches', label: 'Watches', badge: null},
+            {id: 'stray', label: 'Stray', badge: null},
+        ];
+        tabs.selected = 'overview';
+        window.events = [];
+        tabs.addEventListener('sf-tab-selected', (event) => {
+            window.events.push(event.detail);
+        });
+        window.harnessReady = true;
+    </script>
+</body>
+</html>
