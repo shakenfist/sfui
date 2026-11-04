@@ -33,7 +33,11 @@ the current section marked `aria-current="page"`, styled to look
 exactly like `<sf-tabs>` so the design system has one tab-strip
 appearance whichever mechanism draws it. Every measurement in it
 is copied from `components/sf-tabs.js`, and the two carry
-comments saying they must stay in step.
+comments saying they must stay in step. A strip wider than the
+viewport scrolls within itself rather than widening the page, as
+`<sf-tabs>` does; unlike the component it has no script to scroll
+the current item into view, which is unobtrusive because site
+navigation is short.
 
 Navigation is deliberately a stylesheet class and not a
 component, which is worth stating because the resemblance
