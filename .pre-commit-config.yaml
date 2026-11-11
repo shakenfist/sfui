@@ -34,7 +34,7 @@ repos:
   # too, through the pre-commit run in functional-tests.yml, because a
   # hook alone can be skipped with --no-verify.
   - repo: https://github.com/stbenjam/skillsaw
-    rev: v0.22.0
+    rev: v0.23.0
     hooks:
       - id: skillsaw
 
