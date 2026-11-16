@@ -92,6 +92,13 @@ checksums="
 ## Something else
 """,
     'README.md': 'the pitch\n',
+    'logo.svg': """<!-- a comment may mention <script> or onload= harmlessly -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 10 10">
+<defs><path id="dot" d="M1 1h2v2H1z" fill="#134656"/></defs>
+<use xlink:href="#dot"/>
+<use href="#dot" transform="translate(4 4)"/>
+</svg>
+""",
 }
 
 
@@ -246,6 +253,31 @@ def test_unparseable_vendored_dependency_list(tmp_path):
     vendoring = CLEAN['docs/vendoring.md'].replace('## Vendored dependencies', '## Other')
     assert any('could not parse the Vendored dependencies list' in finding
                for finding in findings(tmp_path, {'docs/vendoring.md': vendoring}))
+
+
+@pytest.mark.parametrize('payload, expected', [
+    ('<script>alert(1)</script>', '<script'),
+    ('<foreignObject><div/></foreignObject>', '<foreignObject'),
+    ('<rect onload="alert(1)"/>', 'onload='),
+    ('<rect ONCLICK = "alert(1)"/>', 'ONCLICK ='),
+    ('<a href="javascript:alert(1)"><rect/></a>', 'javascript:'),
+    ('<set attributeName="href" to="javascript:alert(1)"/>', 'javascript:'),
+    ('<image href="https://example.com/x.png"/>', 'href="'),
+    ("<use xlink:href='other.svg#dot'/>", "href='"),
+])
+def test_svg_active_content(tmp_path, payload, expected):
+    svg = CLEAN['logo.svg'].replace('</svg>', payload + '\n</svg>')
+    found = findings(tmp_path, {'logo.svg': svg})
+    assert any(finding.startswith('logo.svg:') and expected in finding for finding in found), found
+
+
+def test_svg_in_a_nested_directory_is_checked(tmp_path):
+    found = findings(tmp_path, {'docs/images/x.svg': '<svg><script/></svg>\n'})
+    assert any(finding.startswith('docs/images/x.svg:') for finding in found)
+
+
+def test_svg_in_a_dot_directory_is_ignored(tmp_path):
+    assert findings(tmp_path, {'.git/x.svg': '<svg><script/></svg>\n'}) == []
 
 
 def test_extract_block_handles_nesting():

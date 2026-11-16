@@ -47,6 +47,15 @@ those says so and names who checks it instead.
 - Every `.sf-*` class `sf.css` defines is rendered somewhere in
   `demo.html`: an unrendered primitive is one nobody has looked
   at.
+- No SVG in the repository carries active content: no `<script>`
+  or `<foreignObject>` elements, no `on*=` event handler
+  attributes, no `javascript:` URLs, and no `href` other than a
+  same-document `#fragment`. SVGs are excluded from human
+  whole-file review (`.vscode/review-scope.toml`) because they are
+  generated path data, so this rule is what keeps one from
+  smuggling script onto the pages it is served beside:
+  `grep -niE '<script|foreignobject|\son[a-z]+=|javascript:|href=' *.svg`
+  should return only `#fragment` references.
 - Every consumer's `.sfui-commit` names the head of canonical
   `develop`, not merely an ancestor of it:
   `git rev-parse develop` here against the file there. This is

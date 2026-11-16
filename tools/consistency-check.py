@@ -32,6 +32,16 @@ VAR_WITH_FALLBACK_RE = re.compile(r'var\((--[\w-]+)\s*,\s*([^();]+)\)')
 VAR_REFERENCE_RE = re.compile(r'var\((--[\w-]+)')
 DECLARATION_RE = re.compile(r'(--[\w-]+)\s*:\s*([^;{}]+);')
 
+# Constructs that let an SVG run script or pull in content from
+# elsewhere: script and foreignObject elements, event handler
+# attributes, javascript: URLs (which <animate> and <set> can also
+# smuggle in through their values), and any href that is not a
+# same-document fragment.
+SVG_ACTIVE_CONTENT_RE = re.compile(
+    r'<\s*(script|foreignObject)\b|\son[a-z]+\s*=|javascript\s*:|'
+    r'\bhref\s*=\s*(?![\'"]\s*#)[\'"]',
+    flags=re.IGNORECASE)
+
 
 def strip_css_comments(text):
     return re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
@@ -154,6 +164,12 @@ class Checker:
         finding."""
         return strip_js_comments(path.read_text())
 
+    def svg_paths(self):
+        """Every SVG in the repository, skipping dot-directories such
+        as .git."""
+        return sorted(path for path in self.repo.rglob('*.svg')
+                      if not any(part.startswith('.') for part in path.relative_to(self.repo).parts))
+
     def run(self):
         tokens_css = self.read('tokens.css')
         sf_css = strip_css_comments(self.read('sf.css'))
@@ -177,6 +193,7 @@ class Checker:
         self.check_demo_coverage(sf_css, demo_html)
         self.check_vendor_list()
         self.check_dependency_pins()
+        self.check_svg_active_content()
         return self.findings
 
     def check_token_parity(self, dark, light):
@@ -316,6 +333,21 @@ class Checker:
         for name in sorted(set(pinned) - set(documented)):
             self.finding('docs/vendoring.md',
                          f'{name} has a pinned checksum but is not in the Vendored dependencies list')
+
+    def check_svg_active_content(self):
+        """No SVG carries script, event handlers, javascript: URLs or
+        references to other documents.
+
+        SVGs are excluded from human whole-file review (see
+        .vscode/review-scope.toml): they are generated path data that
+        nobody can meaningfully read. This rule is what makes that
+        exclusion safe, since an SVG served beside the pages could
+        otherwise carry script."""
+        for path in self.svg_paths():
+            relative = path.relative_to(self.repo)
+            text = strip_html_comments(path.read_text())
+            for match in SVG_ACTIVE_CONTENT_RE.finditer(text):
+                self.finding(relative, f'contains {normalize(match.group(0))!r}; SVGs must be static images')
 
 
 def main():
