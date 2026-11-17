@@ -7,18 +7,15 @@
 # sfui has no build step: the JavaScript, CSS and HTML here are what
 # consumers vendor verbatim through tools/vendor.sh and serve to
 # browsers, so the source is the shipped artifact and all of it is in
-# scope. The SVG logo is included for the same reason -- an SVG can
-# carry script, and it is served alongside the rest. The Python is
-# the consistency checker and the test suite, the shell scripts fetch
-# and verify pinned binaries and vendored dependencies, and the YAML
-# and JSON decide what CI runs and how Biome and Renovate behave. The
-# Markdown is the documentation consumers read before adopting a
-# component.
+# scope. The Python is the consistency checker and the test suite,
+# the shell scripts fetch and verify pinned binaries and vendored
+# dependencies, and the YAML and JSON decide what CI runs and how
+# Biome and Renovate behave. The Markdown is the documentation
+# consumers read before adopting a component.
 include = [
     '*.js',
     '*.css',
     '*.html',
-    '*.svg',
     '*.py',
     '*.sh',
     '*.md',
@@ -37,6 +34,13 @@ exclude = [
     # minified third-party code would attest to nothing useful.
     'lit-core.min.js',
     'morphdom-umd.js',
+    # SVG images. The only one today is the brand logo, copied from
+    # the canonical Shaken Fist asset: tens of kilobytes of generated
+    # path coordinates that a human reader cannot meaningfully attest
+    # to. An SVG can carry script, so tools/consistency-check.py
+    # fails on any SVG with script, event handlers, javascript: URLs
+    # or external references (see docs/consistency-audit.md).
+    '*.svg',
     # A point-in-time archive of intended work, not living artifacts.
     'docs/plans/*',
     # Rewritten daily by the export-repo-config workflow from the
