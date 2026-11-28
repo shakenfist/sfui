@@ -64,10 +64,21 @@ shakenfist/development workflow standards:
 - `pr-re-review.yml` and `pr-retest.yml` -- the
   `@shakenfist-bot` developer automations, copied verbatim from
   the shared templates.
-- `renovate.yml` / `export-repo-config.yml` -- dependency bumps
-  (GitHub Actions and pre-commit hooks; Biome is pinned by hand
-  in `tools/run-biome.sh`) and the daily repository
-  configuration export.
+- `export-repo-config.yml` -- the daily export of the
+  repository's own GitHub configuration.
+
+Dependency updates are not a workflow here. Renovate reaches this
+repository from the fleet runner in shakenfist/development, which
+discovers it because `renovate.json` exists at the root, and
+applies the policy in that repository's `renovate-fleet.json`
+preset rather than anything local -- so `renovate.json` holds only
+the `extends` that reaches the preset. A copy of the per-repository
+workflow here would race the runner, two Renovate instances over
+one repository producing duplicate or half-written pull requests,
+so there is none. What Renovate bumps in this repository is the
+GitHub Actions references and the pre-commit hook revisions; Biome
+is pinned by hand in `tools/run-biome.sh`, and the vendored Lit and
+morphdom bundles by digest in `tools/verify-vendor-deps.sh`.
 
 The no-toolchain constraint shapes the CI choices: Biome is a
 single pinned, checksum-verified binary rather than an npm

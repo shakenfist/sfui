@@ -63,6 +63,18 @@ Things that trip up assistants:
   proposing a commit; `docs/testing.md` covers the setup. CI
   (`.github/workflows/functional-tests.yml`) runs the same
   checks, and the automated reviewer only runs after they pass.
+- Dependency updates come from outside this repository. Renovate
+  runs from a fleet runner in shakenfist/development, so there is
+  no `.github/workflows/renovate.yml` here and there must never
+  be one -- a second Renovate over one repository races the runner
+  and produces duplicate or half-written pull requests.
+  `renovate.json` only extends the fleet preset; add nothing to
+  its top level, because a key set there replaces the preset's
+  value and silently stops the fleet policy applying here. A
+  difference sfui genuinely needs goes in a `packageRules` entry,
+  which Renovate appends to the preset's rules instead of
+  replacing them. See the Continuous integration section of
+  `ARCHITECTURE.md`.
 - Before pushing a branch, run the pre-push audit in
   `PUSH-AUDIT.md`: the mechanical checks first, then the judgment
   review of the diff.
