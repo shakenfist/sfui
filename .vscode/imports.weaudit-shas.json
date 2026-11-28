@@ -35,13 +35,13 @@
       }
     },
     "renovate.json": {
-      "sha": "c91385eb8cc7717ff9f3c5dbebad3de2ee8b70b2",
-      "date": "2026-10-31",
+      "sha": "34bc3ba88cc9475eb7bc7f9ca99d05d0be6a828b",
+      "date": "2026-11-17",
       "imported": {
         "repo": "shakenfist/development",
         "reviewer": "mikal",
         "path": "templates/renovate/renovate.json",
-        "commit": "69a1bd10254d802d484a3fe7cee9f7e38be6f78a",
+        "commit": "eb964fc3f69b728152be391bf46af7a39dbbd688",
         "verified": true
       }
     },
