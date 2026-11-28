@@ -51,6 +51,7 @@ repos:
       - id: end-of-file-fixer
         exclude: ^(lit-core\.min\.js|morphdom-umd\.js|\.vscode/.*\.weaudit.*)$
       - id: check-yaml
+      - id: check-json
       - id: check-merge-conflict
       - id: check-added-large-files
         args: ['--maxkb=1024']
