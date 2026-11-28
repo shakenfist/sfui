@@ -64,6 +64,10 @@ shakenfist/development workflow standards:
 - `pr-re-review.yml` and `pr-retest.yml` -- the
   `@shakenfist-bot` developer automations, copied verbatim from
   the shared templates.
+- `prune-reviews.yml` -- drops review marks in `REVIEWS.md` and
+  `.vscode/*.weaudit-shas.json` whose file has changed since it
+  was reviewed, driving `tools/ci-prune-reviews.sh`; both are
+  copied verbatim from shakenfist/development.
 - `export-repo-config.yml` -- the daily export of the
   repository's own GitHub configuration.
 
@@ -76,9 +80,22 @@ the `extends` that reaches the preset. A copy of the per-repository
 workflow here would race the runner, two Renovate instances over
 one repository producing duplicate or half-written pull requests,
 so there is none. What Renovate bumps in this repository is the
-GitHub Actions references and the pre-commit hook revisions; Biome
-is pinned by hand in `tools/run-biome.sh`, and the vendored Lit and
-morphdom bundles by digest in `tools/verify-vendor-deps.sh`.
+GitHub Actions references and the pre-commit hook revisions -- the
+preset turns on Renovate's opt-in `pre-commit` manager, and carries
+the versioning rule the four-component `shellcheck-py` tags need.
+Everything else is pinned by hand: Biome in `tools/run-biome.sh`,
+the vendored Lit and morphdom bundles by digest in
+`tools/verify-vendor-deps.sh`, and gitsign in
+`tools/ci-prune-reviews.sh`, which is a verbatim import and so is
+bumped upstream in shakenfist/development rather than here.
+
+The conductor in shakenfist/private-ci dispatches the fleet runner
+about once an hour, and the preset's own `schedule` decides when
+pull requests are actually opened. Proposed and pending updates
+are listed on the Dependency Dashboard issue in this repository.
+A bump that never appears, or a preset that fails to resolve, does
+not reach an issue here: look at the `renovate-fleet.yml` run log
+in shakenfist/development.
 
 The no-toolchain constraint shapes the CI choices: Biome is a
 single pinned, checksum-verified binary rather than an npm
